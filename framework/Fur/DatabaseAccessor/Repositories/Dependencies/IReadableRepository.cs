@@ -22,7 +22,7 @@ namespace Fur.DatabaseAccessor
     /// </summary>
     /// <typeparam name="TEntity">实体类型</typeparam>
     /// <typeparam name="TDbContextLocator">数据库上下文定位器</typeparam>
-    public interface IReadableRepository<TEntity, TDbContextLocator> : IRepositoryDependency
+    public interface IReadableRepository<TEntity, TDbContextLocator> : IPrivateRepository
         where TEntity : class, IPrivateEntity, new()
         where TDbContextLocator : class, IDbContextLocator
     {
@@ -103,181 +103,232 @@ namespace Fur.DatabaseAccessor
         /// <summary>
         /// 查询一条记录
         /// </summary>
-        /// <param name="noTracking">是否跟踪实体</param>
+        /// <param name="tracking">是否跟踪实体</param>
         /// <returns>数据库中的实体</returns>
-        TEntity Single(bool noTracking = false);
+        TEntity Single(bool? tracking = null);
 
         /// <summary>
         /// 根据表达式查询一条记录
         /// </summary>
         /// <param name="predicate">表达式</param>
-        /// <param name="noTracking">是否跟踪实体</param>
+        /// <param name="tracking">是否跟踪实体</param>
         /// <returns>数据库中的实体</returns>
-        TEntity Single(Expression<Func<TEntity, bool>> predicate, bool noTracking = false);
+        TEntity Single(Expression<Func<TEntity, bool>> predicate, bool? tracking = null);
 
         /// <summary>
         /// 查询一条记录
         /// </summary>
-        /// <param name="noTracking">是否跟踪实体</param>
+        /// <param name="tracking">是否跟踪实体</param>
         /// <returns>数据库中的实体</returns>
-        TEntity SingleOrDefault(bool noTracking = false);
+        TEntity SingleOrDefault(bool? tracking = null);
 
         /// <summary>
         /// 根据表达式查询一条记录
         /// </summary>
         /// <param name="predicate">表达式</param>
-        /// <param name="noTracking">是否跟踪实体</param>
+        /// <param name="tracking">是否跟踪实体</param>
         /// <returns>数据库中的实体</returns>
-        TEntity SingleOrDefault(Expression<Func<TEntity, bool>> predicate, bool noTracking = false);
+        TEntity SingleOrDefault(Expression<Func<TEntity, bool>> predicate, bool? tracking = null);
 
         /// <summary>
         /// 查询一条记录
         /// </summary>
-        /// <param name="noTracking">是否跟踪实体</param>
+        /// <param name="tracking">是否跟踪实体</param>
         /// <param name="cancellationToken">取消异步令牌</param>
         /// <returns>数据库中的实体</returns>
-        Task<TEntity> SingleAsync(bool noTracking = false, CancellationToken cancellationToken = default);
+        Task<TEntity> SingleAsync(bool? tracking = null, CancellationToken cancellationToken = default);
 
         /// <summary>
         /// 根据表达式查询一条记录
         /// </summary>
         /// <param name="predicate">表达式</param>
-        /// <param name="noTracking">是否跟踪实体</param>
+        /// <param name="tracking">是否跟踪实体</param>
         /// <param name="cancellationToken">取消异步令牌</param>
         /// <returns>数据库中的实体</returns>
-        Task<TEntity> SingleAsync(Expression<Func<TEntity, bool>> predicate, bool noTracking = false, CancellationToken cancellationToken = default);
+        Task<TEntity> SingleAsync(Expression<Func<TEntity, bool>> predicate, bool? tracking = null, CancellationToken cancellationToken = default);
 
         /// <summary>
         /// 查询一条记录
         /// </summary>
-        /// <param name="noTracking">是否跟踪实体</param>
+        /// <param name="tracking">是否跟踪实体</param>
+        /// <param name="cancellationToken">异步取消令牌</param>
         /// <returns>数据库中的实体</returns>
-        TEntity First(bool noTracking = false);
+        Task<TEntity> SingleOrDefaultAsync(bool? tracking = null, CancellationToken cancellationToken = default);
 
         /// <summary>
         /// 根据表达式查询一条记录
         /// </summary>
         /// <param name="predicate">表达式</param>
-        /// <param name="noTracking">是否跟踪实体</param>
+        /// <param name="tracking">是否跟踪实体</param>
+        /// <param name="cancellationToken">异步取消令牌</param>
         /// <returns>数据库中的实体</returns>
-        TEntity First(Expression<Func<TEntity, bool>> predicate, bool noTracking = false);
+        Task<TEntity> SingleOrDefaultAsync(Expression<Func<TEntity, bool>> predicate, bool? tracking = null, CancellationToken cancellationToken = default);
 
         /// <summary>
         /// 查询一条记录
         /// </summary>
-        /// <param name="noTracking">是否跟踪实体</param>
+        /// <param name="tracking">是否跟踪实体</param>
         /// <returns>数据库中的实体</returns>
-        TEntity FirstOrDefault(bool noTracking = false);
+        TEntity First(bool? tracking = null);
 
         /// <summary>
         /// 根据表达式查询一条记录
         /// </summary>
         /// <param name="predicate">表达式</param>
-        /// <param name="noTracking">是否跟踪实体</param>
+        /// <param name="tracking">是否跟踪实体</param>
         /// <returns>数据库中的实体</returns>
-        TEntity FirstOrDefault(Expression<Func<TEntity, bool>> predicate, bool noTracking = false);
+        TEntity First(Expression<Func<TEntity, bool>> predicate, bool? tracking = null);
 
         /// <summary>
         /// 查询一条记录
         /// </summary>
-        /// <param name="noTracking">是否跟踪实体</param>
+        /// <param name="tracking">是否跟踪实体</param>
+        /// <returns>数据库中的实体</returns>
+        TEntity FirstOrDefault(bool? tracking = null);
+
+        /// <summary>
+        /// 根据表达式查询一条记录
+        /// </summary>
+        /// <param name="predicate">表达式</param>
+        /// <param name="tracking">是否跟踪实体</param>
+        /// <returns>数据库中的实体</returns>
+        TEntity FirstOrDefault(Expression<Func<TEntity, bool>> predicate, bool? tracking = null);
+
+        /// <summary>
+        /// 查询一条记录
+        /// </summary>
+        /// <param name="tracking">是否跟踪实体</param>
         /// <param name="cancellationToken">取消异步令牌</param>
         /// <returns>数据库中的实体</returns>
-        Task<TEntity> FirstAsync(bool noTracking = false, CancellationToken cancellationToken = default);
+        Task<TEntity> FirstAsync(bool? tracking = null, CancellationToken cancellationToken = default);
 
         /// <summary>
         /// 根据表达式查询一条记录
         /// </summary>
         /// <param name="predicate">表达式</param>
-        /// <param name="noTracking">是否跟踪实体</param>
+        /// <param name="tracking">是否跟踪实体</param>
         /// <param name="cancellationToken">取消异步令牌</param>
         /// <returns>数据库中的实体</returns>
-        Task<TEntity> FirstAsync(Expression<Func<TEntity, bool>> predicate, bool noTracking = false, CancellationToken cancellationToken = default);
+        Task<TEntity> FirstAsync(Expression<Func<TEntity, bool>> predicate, bool? tracking = null, CancellationToken cancellationToken = default);
 
         /// <summary>
         /// 查询一条记录
         /// </summary>
-        /// <param name="noTracking">是否跟踪实体</param>
+        /// <param name="tracking">是否跟踪实体</param>
+        /// <param name="cancellationToken">异步取消令牌</param>
         /// <returns>数据库中的实体</returns>
-        TEntity Last(bool noTracking = false);
+        Task<TEntity> FirstOrDefaultAsync(bool? tracking = null, CancellationToken cancellationToken = default);
 
         /// <summary>
         /// 根据表达式查询一条记录
         /// </summary>
         /// <param name="predicate">表达式</param>
-        /// <param name="noTracking">是否跟踪实体</param>
+        /// <param name="tracking">是否跟踪实体</param>
+        /// <param name="cancellationToken">异步取消令牌</param>
         /// <returns>数据库中的实体</returns>
-        TEntity Last(Expression<Func<TEntity, bool>> predicate, bool noTracking = false);
+        Task<TEntity> FirstOrDefaultAsync(Expression<Func<TEntity, bool>> predicate, bool? tracking = null, CancellationToken cancellationToken = default);
 
         /// <summary>
         /// 查询一条记录
         /// </summary>
-        /// <param name="noTracking">是否跟踪实体</param>
+        /// <param name="tracking">是否跟踪实体</param>
         /// <returns>数据库中的实体</returns>
-        TEntity LastOrDefault(bool noTracking = false);
+        TEntity Last(bool? tracking = null);
 
         /// <summary>
         /// 根据表达式查询一条记录
         /// </summary>
         /// <param name="predicate">表达式</param>
-        /// <param name="noTracking">是否跟踪实体</param>
+        /// <param name="tracking">是否跟踪实体</param>
         /// <returns>数据库中的实体</returns>
-        TEntity LastOrDefault(Expression<Func<TEntity, bool>> predicate, bool noTracking = false);
+        TEntity Last(Expression<Func<TEntity, bool>> predicate, bool? tracking = null);
 
         /// <summary>
         /// 查询一条记录
         /// </summary>
-        /// <param name="noTracking">是否跟踪实体</param>
-        /// <param name="cancellationToken">取消异步令牌</param>
+        /// <param name="tracking">是否跟踪实体</param>
         /// <returns>数据库中的实体</returns>
-        Task<TEntity> LastAsync(bool noTracking = false, CancellationToken cancellationToken = default);
+        TEntity LastOrDefault(bool? tracking = null);
 
         /// <summary>
         /// 根据表达式查询一条记录
         /// </summary>
         /// <param name="predicate">表达式</param>
-        /// <param name="noTracking">是否跟踪实体</param>
+        /// <param name="tracking">是否跟踪实体</param>
+        /// <returns>数据库中的实体</returns>
+        TEntity LastOrDefault(Expression<Func<TEntity, bool>> predicate, bool? tracking = null);
+
+        /// <summary>
+        /// 查询一条记录
+        /// </summary>
+        /// <param name="tracking">是否跟踪实体</param>
         /// <param name="cancellationToken">取消异步令牌</param>
         /// <returns>数据库中的实体</returns>
-        Task<TEntity> LastAsync(Expression<Func<TEntity, bool>> predicate, bool noTracking = false, CancellationToken cancellationToken = default);
+        Task<TEntity> LastAsync(bool? tracking = null, CancellationToken cancellationToken = default);
+
+        /// <summary>
+        /// 根据表达式查询一条记录
+        /// </summary>
+        /// <param name="predicate">表达式</param>
+        /// <param name="tracking">是否跟踪实体</param>
+        /// <param name="cancellationToken">取消异步令牌</param>
+        /// <returns>数据库中的实体</returns>
+        Task<TEntity> LastAsync(Expression<Func<TEntity, bool>> predicate, bool? tracking = null, CancellationToken cancellationToken = default);
+
+        /// <summary>
+        /// 查询一条记录
+        /// </summary>
+        /// <param name="tracking">是否跟踪实体</param>
+        /// <param name="cancellationToken">异步取消令牌</param>
+        /// <returns>数据库中的实体</returns>
+        Task<TEntity> LastOrDefaultAsync(bool? tracking = null, CancellationToken cancellationToken = default);
+
+        /// <summary>
+        /// 根据表达式查询一条记录
+        /// </summary>
+        /// <param name="predicate">表达式</param>
+        /// <param name="tracking">是否跟踪实体</param>
+        /// <param name="cancellationToken">异步取消令牌</param>
+        /// <returns>数据库中的实体</returns>
+        Task<TEntity> LastOrDefaultAsync(Expression<Func<TEntity, bool>> predicate, bool? tracking = null, CancellationToken cancellationToken = default);
 
         /// <summary>
         /// 根据表达式查询多条记录
         /// </summary>
         /// <param name="predicate">表达式</param>
-        /// <param name="noTracking">是否跟踪实体</param>
+        /// <param name="tracking">是否跟踪实体</param>
         /// <param name="ignoreQueryFilters">是否忽略查询过滤器</param>
         /// <returns>数据库中的多个实体</returns>
-        IQueryable<TEntity> Where(Expression<Func<TEntity, bool>> predicate, bool noTracking = true, bool ignoreQueryFilters = false);
+        IQueryable<TEntity> Where(Expression<Func<TEntity, bool>> predicate, bool? tracking = null, bool ignoreQueryFilters = false);
 
         /// <summary>
         /// 根据表达式查询多条记录
         /// </summary>
         /// <param name="predicate">表达式</param>
-        /// <param name="noTracking">是否跟踪实体</param>
+        /// <param name="tracking">是否跟踪实体</param>
         /// <param name="ignoreQueryFilters">是否忽略查询过滤器</param>
         /// <returns>数据库中的多个实体</returns>
-        IQueryable<TEntity> Where(Expression<Func<TEntity, int, bool>> predicate, bool noTracking = true, bool ignoreQueryFilters = false);
+        IQueryable<TEntity> Where(Expression<Func<TEntity, int, bool>> predicate, bool? tracking = null, bool ignoreQueryFilters = false);
 
         /// <summary>
         /// 根据条件执行表达式查询多条记录
         /// </summary>
         /// <param name="condition">条件</param>
         /// <param name="predicate">表达式</param>
-        /// <param name="noTracking">是否跟踪实体</param>
+        /// <param name="tracking">是否跟踪实体</param>
         /// <param name="ignoreQueryFilters">是否忽略查询过滤器</param>
         /// <returns>数据库中的多个实体</returns>
-        IQueryable<TEntity> Where(bool condition, Expression<Func<TEntity, bool>> predicate, bool noTracking = true, bool ignoreQueryFilters = false);
+        IQueryable<TEntity> Where(bool condition, Expression<Func<TEntity, bool>> predicate, bool? tracking = null, bool ignoreQueryFilters = false);
 
         /// <summary>
         /// 根据条件执行表达式查询多条记录
         /// </summary>
         /// <param name="condition">条件</param>
         /// <param name="predicate">表达式</param>
-        /// <param name="noTracking">是否跟踪实体</param>
+        /// <param name="tracking">是否跟踪实体</param>
         /// <param name="ignoreQueryFilters">是否忽略查询过滤器</param>
         /// <returns>数据库中的多个实体</returns>
-        IQueryable<TEntity> Where(bool condition, Expression<Func<TEntity, int, bool>> predicate, bool noTracking = true, bool ignoreQueryFilters = false);
+        IQueryable<TEntity> Where(bool condition, Expression<Func<TEntity, int, bool>> predicate, bool? tracking = null, bool ignoreQueryFilters = false);
 
         /// <summary>
         /// 根据条件执行表达式查询多条记录
@@ -290,10 +341,10 @@ namespace Fur.DatabaseAccessor
         /// 根据条件执行表达式查询多条记录
         /// </summary>
         /// <param name="predicates">表达式集合</param>
-        /// <param name="noTracking">是否跟踪实体</param>
+        /// <param name="tracking">是否跟踪实体</param>
         /// <param name="ignoreQueryFilters">是否忽略查询过滤器</param>
         /// <returns>数据库中的多个实体</returns>
-        IQueryable<TEntity> Where(Expression<Func<TEntity, bool>>[] predicates, bool noTracking = true, bool ignoreQueryFilters = false);
+        IQueryable<TEntity> Where(Expression<Func<TEntity, bool>>[] predicates, bool? tracking = null, bool ignoreQueryFilters = false);
 
         /// <summary>
         /// 根据条件执行表达式查询多条记录
@@ -306,10 +357,10 @@ namespace Fur.DatabaseAccessor
         /// 根据条件执行表达式查询多条记录
         /// </summary>
         /// <param name="predicates">表达式集合</param>
-        /// <param name="noTracking">是否跟踪实体</param>
+        /// <param name="tracking">是否跟踪实体</param>
         /// <param name="ignoreQueryFilters">是否忽略查询过滤器</param>
         /// <returns>数据库中的多个实体</returns>
-        IQueryable<TEntity> Where(Expression<Func<TEntity, int, bool>>[] predicates, bool noTracking = true, bool ignoreQueryFilters = false);
+        IQueryable<TEntity> Where(Expression<Func<TEntity, int, bool>>[] predicates, bool? tracking = null, bool ignoreQueryFilters = false);
 
         /// <summary>
         /// 根据条件执行表达式查询多条记录
@@ -322,10 +373,10 @@ namespace Fur.DatabaseAccessor
         /// 根据条件执行表达式查询多条记录
         /// </summary>
         /// <param name="conditionPredicates">条件表达式集合</param>
-        /// <param name="noTracking">是否跟踪实体</param>
+        /// <param name="tracking">是否跟踪实体</param>
         /// <param name="ignoreQueryFilters">是否忽略查询过滤器</param>
         /// <returns>数据库中的多个实体</returns>
-        IQueryable<TEntity> Where((bool condition, Expression<Func<TEntity, bool>> expression)[] conditionPredicates, bool noTracking = true, bool ignoreQueryFilters = false);
+        IQueryable<TEntity> Where((bool condition, Expression<Func<TEntity, bool>> expression)[] conditionPredicates, bool? tracking = null, bool ignoreQueryFilters = false);
 
         /// <summary>
         /// 根据条件执行表达式查询多条记录
@@ -338,271 +389,291 @@ namespace Fur.DatabaseAccessor
         /// 根据条件执行表达式查询多条记录
         /// </summary>
         /// <param name="conditionPredicates">条件表达式集合</param>
-        /// <param name="noTracking">是否跟踪实体</param>
+        /// <param name="tracking">是否跟踪实体</param>
         /// <param name="ignoreQueryFilters">是否忽略查询过滤器</param>
         /// <returns>数据库中的多个实体</returns>
-        IQueryable<TEntity> Where((bool condition, Expression<Func<TEntity, int, bool>> expression)[] conditionPredicates, bool noTracking = true, bool ignoreQueryFilters = false);
+        IQueryable<TEntity> Where((bool condition, Expression<Func<TEntity, int, bool>> expression)[] conditionPredicates, bool? tracking = null, bool ignoreQueryFilters = false);
 
         /// <summary>
         /// 加载关联数据
         /// </summary>
         /// <param name="predicate">表达式</param>
-        /// <param name="noTracking">是否跟踪实体</param>
+        /// <param name="tracking">是否跟踪实体</param>
         /// <param name="ignoreQueryFilters">是否忽略查询过滤器</param>
         /// <returns>数据库中的多个实体</returns>
-        IIncludableQueryable<TEntity, TProperty> Include<TProperty>(Expression<Func<TEntity, TProperty>> predicate, bool noTracking = true, bool ignoreQueryFilters = false);
+        IIncludableQueryable<TEntity, TProperty> Include<TProperty>(Expression<Func<TEntity, TProperty>> predicate, bool? tracking = null, bool ignoreQueryFilters = false);
 
         /// <summary>
         /// 根据条件加载关联数据
         /// </summary>
         /// <param name="condition">条件</param>
         /// <param name="predicate">表达式</param>
-        /// <param name="noTracking">是否跟踪实体</param>
+        /// <param name="tracking">是否跟踪实体</param>
         /// <param name="ignoreQueryFilters">是否忽略查询过滤器</param>
         /// <returns>数据库中的多个实体</returns>
-        IIncludableQueryable<TEntity, TProperty> Include<TProperty>(bool condition, Expression<Func<TEntity, TProperty>> predicate, bool noTracking = true, bool ignoreQueryFilters = false);
+        IIncludableQueryable<TEntity, TProperty> Include<TProperty>(bool condition, Expression<Func<TEntity, TProperty>> predicate, bool? tracking = null, bool ignoreQueryFilters = false);
 
         /// <summary>
         /// 判断记录是否存在
         /// </summary>
-        /// <param name="noTracking">是否跟踪实体</param>
+        /// <param name="tracking">是否跟踪实体</param>
         /// <param name="ignoreQueryFilters">是否忽略查询过滤器</param>
         /// <returns>bool</returns>
-        bool Any(bool noTracking = true, bool ignoreQueryFilters = false);
+        bool Any(bool? tracking = null, bool ignoreQueryFilters = false);
 
         /// <summary>
         /// 根据表达式判断记录是否存在
         /// </summary>
         /// <param name="predicate">表达式</param>
-        /// <param name="noTracking">是否跟踪实体</param>
+        /// <param name="tracking">是否跟踪实体</param>
         /// <param name="ignoreQueryFilters">是否忽略查询过滤器</param>
         /// <returns>bool</returns>
-        bool Any(Expression<Func<TEntity, bool>> predicate, bool noTracking = true, bool ignoreQueryFilters = false);
+        bool Any(Expression<Func<TEntity, bool>> predicate, bool? tracking = null, bool ignoreQueryFilters = false);
 
         /// <summary>
         /// 判断记录是否存在
         /// </summary>
-        /// <param name="noTracking">是否跟踪实体</param>
+        /// <param name="tracking">是否跟踪实体</param>
         /// <param name="ignoreQueryFilters">是否忽略查询过滤器</param>
         /// <param name="cancellationToken">取消异步令牌</param>
         /// <returns>bool</returns>
-        Task<bool> AnyAsync(bool noTracking = true, bool ignoreQueryFilters = false, CancellationToken cancellationToken = default);
+        Task<bool> AnyAsync(bool? tracking = null, bool ignoreQueryFilters = false, CancellationToken cancellationToken = default);
 
         /// <summary>
         /// 根据表达式判断记录是否存在
         /// </summary>
         /// <param name="predicate">表达式</param>
-        /// <param name="noTracking">是否跟踪实体</param>
+        /// <param name="tracking">是否跟踪实体</param>
         /// <param name="ignoreQueryFilters">是否忽略查询过滤器</param>
         /// <param name="cancellationToken">取消异步令牌</param>
         /// <returns>bool</returns>
-        Task<bool> AnyAsync(Expression<Func<TEntity, bool>> predicate, bool noTracking = true, bool ignoreQueryFilters = false, CancellationToken cancellationToken = default);
+        Task<bool> AnyAsync(Expression<Func<TEntity, bool>> predicate, bool? tracking = null, bool ignoreQueryFilters = false, CancellationToken cancellationToken = default);
 
         /// <summary>
         /// 根据表达式判断记录是否全部满足条件
         /// </summary>
         /// <param name="predicate">表达式</param>
-        /// <param name="noTracking">是否跟踪实体</param>
+        /// <param name="tracking">是否跟踪实体</param>
         /// <param name="ignoreQueryFilters">是否忽略查询过滤器</param>
         /// <returns>bool</returns>
-        bool All(Expression<Func<TEntity, bool>> predicate, bool noTracking = true, bool ignoreQueryFilters = false);
+        bool All(Expression<Func<TEntity, bool>> predicate, bool? tracking = null, bool ignoreQueryFilters = false);
 
         /// <summary>
         /// 根据表达式判断记录是否全部满足条件
         /// </summary>
         /// <param name="predicate">表达式</param>
-        /// <param name="noTracking">是否跟踪实体</param>
+        /// <param name="tracking">是否跟踪实体</param>
         /// <param name="ignoreQueryFilters">是否忽略查询过滤器</param>
         /// <param name="cancellationToken">取消异步令牌</param>
         /// <returns>bool</returns>
-        Task<bool> AllAsync(Expression<Func<TEntity, bool>> predicate, bool noTracking = true, bool ignoreQueryFilters = false, CancellationToken cancellationToken = default);
+        Task<bool> AllAsync(Expression<Func<TEntity, bool>> predicate, bool? tracking = null, bool ignoreQueryFilters = false, CancellationToken cancellationToken = default);
 
         /// <summary>
         /// 查看记录条数
         /// </summary>
-        /// <param name="noTracking">是否跟踪实体</param>
+        /// <param name="tracking">是否跟踪实体</param>
         /// <param name="ignoreQueryFilters">是否忽略查询过滤器</param>
         /// <returns>int</returns>
-        int Count(bool noTracking = true, bool ignoreQueryFilters = false);
+        int Count(bool? tracking = null, bool ignoreQueryFilters = false);
 
         /// <summary>
         /// 根据表达式查询记录条数
         /// </summary>
         /// <param name="predicate">表达式</param>
-        /// <param name="noTracking">是否跟踪实体</param>
+        /// <param name="tracking">是否跟踪实体</param>
         /// <param name="ignoreQueryFilters">是否忽略查询过滤器</param>
         /// <returns>int</returns>
-        int Count(Expression<Func<TEntity, bool>> predicate, bool noTracking = true, bool ignoreQueryFilters = false);
+        int Count(Expression<Func<TEntity, bool>> predicate, bool? tracking = null, bool ignoreQueryFilters = false);
 
         /// <summary>
         /// 查看记录条数
         /// </summary>
-        /// <param name="noTracking">是否跟踪实体</param>
+        /// <param name="tracking">是否跟踪实体</param>
         /// <param name="ignoreQueryFilters">是否忽略查询过滤器</param>
         /// <param name="cancellationToken">取消异步令牌</param>
         /// <returns>int</returns>
-        Task<int> CountAsync(bool noTracking = true, bool ignoreQueryFilters = false, CancellationToken cancellationToken = default);
+        Task<int> CountAsync(bool? tracking = null, bool ignoreQueryFilters = false, CancellationToken cancellationToken = default);
 
         /// <summary>
         /// 根据表达式查询记录条数
         /// </summary>
         /// <param name="predicate">表达式</param>
-        /// <param name="noTracking">是否跟踪实体</param>
+        /// <param name="tracking">是否跟踪实体</param>
         /// <param name="ignoreQueryFilters">是否忽略查询过滤器</param>
         /// <param name="cancellationToken">取消异步令牌</param>
         /// <returns>int</returns>
-        Task<int> CountAsync(Expression<Func<TEntity, bool>> predicate, bool noTracking = true, bool ignoreQueryFilters = false, CancellationToken cancellationToken = default);
+        Task<int> CountAsync(Expression<Func<TEntity, bool>> predicate, bool? tracking = null, bool ignoreQueryFilters = false, CancellationToken cancellationToken = default);
 
         /// <summary>
         /// 查看最小记录
         /// </summary>
-        /// <param name="noTracking">是否跟踪实体</param>
+        /// <param name="tracking">是否跟踪实体</param>
         /// <param name="ignoreQueryFilters">是否忽略查询过滤器</param>
         /// <returns>实体</returns>
-        TEntity Min(bool noTracking = true, bool ignoreQueryFilters = false);
+        TEntity Min(bool? tracking = null, bool ignoreQueryFilters = false);
 
         /// <summary>
         /// 根据表达式查看最小值
         /// </summary>
         /// <typeparam name="TResult">最小值类型</typeparam>
         /// <param name="predicate">表达式</param>
-        /// <param name="noTracking">是否跟踪实体</param>
+        /// <param name="tracking">是否跟踪实体</param>
         /// <param name="ignoreQueryFilters">是否忽略查询过滤器</param>
         /// <returns>TResult</returns>
-        TResult Min<TResult>(Expression<Func<TEntity, TResult>> predicate, bool noTracking = true, bool ignoreQueryFilters = false);
+        TResult Min<TResult>(Expression<Func<TEntity, TResult>> predicate, bool? tracking = null, bool ignoreQueryFilters = false);
 
         /// <summary>
         /// 查看最小记录
         /// </summary>
-        /// <param name="noTracking">是否跟踪实体</param>
+        /// <param name="tracking">是否跟踪实体</param>
         /// <param name="ignoreQueryFilters">是否忽略查询过滤器</param>
         /// <param name="cancellationToken">取消异步令牌</param>
         /// <returns>实体</returns>
-        Task<TEntity> MinAsync(bool noTracking = true, bool ignoreQueryFilters = false, CancellationToken cancellationToken = default);
+        Task<TEntity> MinAsync(bool? tracking = null, bool ignoreQueryFilters = false, CancellationToken cancellationToken = default);
 
         /// <summary>
         /// 根据表达式查看最小值
         /// </summary>
         /// <typeparam name="TResult">最小值类型</typeparam>
         /// <param name="predicate">表达式</param>
-        /// <param name="noTracking">是否跟踪实体</param>
+        /// <param name="tracking">是否跟踪实体</param>
         /// <param name="ignoreQueryFilters">是否忽略查询过滤器</param>
         /// <param name="cancellationToken">取消异步令牌</param>
         /// <returns>TResult</returns>
-        Task<TResult> MinAsync<TResult>(Expression<Func<TEntity, TResult>> predicate, bool noTracking = true, bool ignoreQueryFilters = false, CancellationToken cancellationToken = default);
+        Task<TResult> MinAsync<TResult>(Expression<Func<TEntity, TResult>> predicate, bool? tracking = null, bool ignoreQueryFilters = false, CancellationToken cancellationToken = default);
 
         /// <summary>
         /// 查看最大记录
         /// </summary>
-        /// <param name="noTracking">是否跟踪实体</param>
+        /// <param name="tracking">是否跟踪实体</param>
         /// <param name="ignoreQueryFilters">是否忽略查询过滤器</param>
         /// <returns>实体</returns>
-        TEntity Max(bool noTracking = true, bool ignoreQueryFilters = false);
+        TEntity Max(bool? tracking = null, bool ignoreQueryFilters = false);
 
         /// <summary>
         /// 根据表达式查看最小值
         /// </summary>
         /// <typeparam name="TResult">最小值类型</typeparam>
         /// <param name="predicate">表达式</param>
-        /// <param name="noTracking">是否跟踪实体</param>
+        /// <param name="tracking">是否跟踪实体</param>
         /// <param name="ignoreQueryFilters">是否忽略查询过滤器</param>
         /// <returns>TResult</returns>
-        TResult Max<TResult>(Expression<Func<TEntity, TResult>> predicate, bool noTracking = true, bool ignoreQueryFilters = false);
+        TResult Max<TResult>(Expression<Func<TEntity, TResult>> predicate, bool? tracking = null, bool ignoreQueryFilters = false);
 
         /// <summary>
         /// 查看最大记录
         /// </summary>
-        /// <param name="noTracking">是否跟踪实体</param>
+        /// <param name="tracking">是否跟踪实体</param>
         /// <param name="ignoreQueryFilters">是否忽略查询过滤器</param>
         /// <param name="cancellationToken">取消异步令牌</param>
         /// <returns>实体</returns>
-        Task<TEntity> MaxAsync(bool noTracking = true, bool ignoreQueryFilters = false, CancellationToken cancellationToken = default);
+        Task<TEntity> MaxAsync(bool? tracking = null, bool ignoreQueryFilters = false, CancellationToken cancellationToken = default);
 
         /// <summary>
         /// 根据表达式查看最小值
         /// </summary>
         /// <typeparam name="TResult">最小值类型</typeparam>
         /// <param name="predicate">表达式</param>
-        /// <param name="noTracking">是否跟踪实体</param>
+        /// <param name="tracking">是否跟踪实体</param>
         /// <param name="ignoreQueryFilters">是否忽略查询过滤器</param>
         /// <param name="cancellationToken">取消异步令牌</param>
         /// <returns>TResult</returns>
-        Task<TResult> MaxAsync<TResult>(Expression<Func<TEntity, TResult>> predicate, bool noTracking = true, bool ignoreQueryFilters = false, CancellationToken cancellationToken = default);
+        Task<TResult> MaxAsync<TResult>(Expression<Func<TEntity, TResult>> predicate, bool? tracking = null, bool ignoreQueryFilters = false, CancellationToken cancellationToken = default);
 
         /// <summary>
         /// 构建查询分析器
         /// </summary>
-        /// <param name="noTracking">是否跟踪实体</param>
-        /// <returns>IQueryable<TEntity></returns>
-        IQueryable<TEntity> AsQueryable(bool noTracking = true);
-
-        /// <summary>
-        /// 构建查询分析器
-        /// </summary>
-        /// <param name="predicate">表达式</param>
-        /// <param name="noTracking">是否跟踪实体</param>
-        /// <param name="ignoreQueryFilters">是否忽略查询过滤器</param>
-        /// <returns>IQueryable<TEntity></returns>
-        IQueryable<TEntity> AsQueryable(Expression<Func<TEntity, bool>> predicate, bool noTracking = true, bool ignoreQueryFilters = false);
+        /// <param name="tracking">是否跟踪实体</param>
+        /// <returns>IQueryable{TEntity}</returns>
+        IQueryable<TEntity> AsQueryable(bool? tracking = null);
 
         /// <summary>
         /// 构建查询分析器
         /// </summary>
         /// <param name="predicate">表达式</param>
-        /// <param name="noTracking">是否跟踪实体</param>
+        /// <param name="tracking">是否跟踪实体</param>
         /// <param name="ignoreQueryFilters">是否忽略查询过滤器</param>
-        /// <returns>IQueryable<TEntity></returns>
-        IQueryable<TEntity> AsQueryable(Expression<Func<TEntity, int, bool>> predicate, bool noTracking = true, bool ignoreQueryFilters = false);
+        /// <returns>IQueryable{TEntity}</returns>
+        IQueryable<TEntity> AsQueryable(Expression<Func<TEntity, bool>> predicate, bool? tracking = null, bool ignoreQueryFilters = false);
+
+        /// <summary>
+        /// 构建查询分析器
+        /// </summary>
+        /// <param name="predicate">表达式</param>
+        /// <param name="tracking">是否跟踪实体</param>
+        /// <param name="ignoreQueryFilters">是否忽略查询过滤器</param>
+        /// <returns>IQueryable{TEntity}</returns>
+        IQueryable<TEntity> AsQueryable(Expression<Func<TEntity, int, bool>> predicate, bool? tracking = null, bool ignoreQueryFilters = false);
 
         /// <summary>
         /// 直接返回数据库结果
         /// </summary>
-        /// <param name="noTracking">是否跟踪实体</param>
-        /// <returns>List<TEntity></returns>
-        List<TEntity> AsEnumerable(bool noTracking = true);
+        /// <param name="tracking">是否跟踪实体</param>
+        /// <returns>List{TEntity}</returns>
+        List<TEntity> AsEnumerable(bool? tracking = null);
 
         /// <summary>
         /// 直接返回数据库结果
         /// </summary>
         /// <param name="predicate">表达式</param>
-        /// <param name="noTracking">是否跟踪实体</param>
+        /// <param name="tracking">是否跟踪实体</param>
         /// <param name="ignoreQueryFilters">是否忽略查询过滤器</param>
-        /// <returns>List<TEntity></returns>
-        List<TEntity> AsEnumerable(Expression<Func<TEntity, bool>> predicate, bool noTracking = true, bool ignoreQueryFilters = false);
+        /// <returns>List{TEntity}</returns>
+        List<TEntity> AsEnumerable(Expression<Func<TEntity, bool>> predicate, bool? tracking = null, bool ignoreQueryFilters = false);
 
         /// <summary>
         /// 直接返回数据库结果
         /// </summary>
         /// <param name="predicate">表达式</param>
-        /// <param name="noTracking">是否跟踪实体</param>
+        /// <param name="tracking">是否跟踪实体</param>
         /// <param name="ignoreQueryFilters">是否忽略查询过滤器</param>
-        /// <returns>List<TEntity></returns>
-        List<TEntity> AsEnumerable(Expression<Func<TEntity, int, bool>> predicate, bool noTracking = true, bool ignoreQueryFilters = false);
+        /// <returns>List{TEntity}</returns>
+        List<TEntity> AsEnumerable(Expression<Func<TEntity, int, bool>> predicate, bool? tracking = null, bool ignoreQueryFilters = false);
 
         /// <summary>
         /// 直接返回数据库结果
         /// </summary>
-        /// <param name="noTracking">是否跟踪实体</param>
-        /// <returns>List<TEntity></returns>
-        Task<List<TEntity>> AsAsyncEnumerable(bool noTracking = true, CancellationToken cancellationToken = default);
+        /// <param name="tracking">是否跟踪实体</param>
+        /// <param name="cancellationToken">异步取消令牌</param>
+        /// <returns>List{TEntity}</returns>
+        Task<List<TEntity>> AsAsyncEnumerable(bool? tracking = null, CancellationToken cancellationToken = default);
 
         /// <summary>
         /// 直接返回数据库结果
         /// </summary>
         /// <param name="predicate">表达式</param>
-        /// <param name="noTracking">是否跟踪实体</param>
-        /// <param name="ignoreQueryFilters">是否忽略查询过滤器</param>
-        /// <returns>List<TEntity></returns>
-        Task<List<TEntity>> AsAsyncEnumerable(Expression<Func<TEntity, bool>> predicate, bool noTracking = true, bool ignoreQueryFilters = false, CancellationToken cancellationToken = default);
-
-        /// <summary>
-        /// 直接返回数据库结果
-        /// </summary>
-        /// <param name="predicate">表达式</param>
-        /// <param name="noTracking">是否跟踪实体</param>
+        /// <param name="tracking">是否跟踪实体</param>
         /// <param name="ignoreQueryFilters">是否忽略查询过滤器</param>
         /// <param name="cancellationToken">异步取消令牌</param>
-        /// <returns>List<TEntity></returns>
-        Task<List<TEntity>> AsAsyncEnumerable(Expression<Func<TEntity, int, bool>> predicate, bool noTracking = true, bool ignoreQueryFilters = false, CancellationToken cancellationToken = default);
+        /// <returns>List{TEntity}</returns>
+        Task<List<TEntity>> AsAsyncEnumerable(Expression<Func<TEntity, bool>> predicate, bool? tracking = null, bool ignoreQueryFilters = false, CancellationToken cancellationToken = default);
+
+        /// <summary>
+        /// 直接返回数据库结果
+        /// </summary>
+        /// <param name="predicate">表达式</param>
+        /// <param name="tracking">是否跟踪实体</param>
+        /// <param name="ignoreQueryFilters">是否忽略查询过滤器</param>
+        /// <param name="cancellationToken">异步取消令牌</param>
+        /// <returns>List{TEntity}</returns>
+        Task<List<TEntity>> AsAsyncEnumerable(Expression<Func<TEntity, int, bool>> predicate, bool? tracking = null, bool ignoreQueryFilters = false, CancellationToken cancellationToken = default);
+
+        /// <summary>
+        /// 执行 Sql 返回 IQueryable
+        /// </summary>
+        /// <param name="sql">sql 语句</param>
+        /// <param name="parameters">命令参数</param>
+        /// <returns>IQueryable{TEntity}</returns>
+        IQueryable<TEntity> FromSqlRaw(string sql, params object[] parameters);
+
+        /// <summary>
+        /// 执行 Sql 返回 IQueryable
+        /// </summary>
+        /// <remarks>
+        /// 支持字符串内插语法
+        /// </remarks>
+        /// <param name="sql">sql 语句</param>
+        /// <returns>IQueryable{TEntity}</returns>
+        IQueryable<TEntity> FromSqlInterpolated(FormattableString sql);
     }
 }

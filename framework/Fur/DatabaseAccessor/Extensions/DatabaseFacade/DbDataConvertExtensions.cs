@@ -1,4 +1,5 @@
 ﻿using Fur.DependencyInjection;
+using Fur.Extensions;
 using Mapster;
 using System;
 using System.Collections.Generic;
@@ -21,7 +22,7 @@ namespace Fur.DatabaseAccessor
         /// </summary>
         /// <typeparam name="T">返回值类型</typeparam>
         /// <param name="dataTable">DataTable</param>
-        /// <returns>List<T></returns>
+        /// <returns>List{T}</returns>
         public static List<T> ToList<T>(this DataTable dataTable)
         {
             return dataTable.ToList(typeof(List<T>)).Adapt<List<T>>();
@@ -32,7 +33,7 @@ namespace Fur.DatabaseAccessor
         /// </summary>
         /// <typeparam name="T">返回值类型</typeparam>
         /// <param name="dataTable">DataTable</param>
-        /// <returns>List<T></returns>
+        /// <returns>List{T}</returns>
         public static async Task<List<T>> ToListAsync<T>(this DataTable dataTable)
         {
             var list = await dataTable.ToListAsync(typeof(List<T>));
@@ -253,7 +254,7 @@ namespace Fur.DatabaseAccessor
                     // 只取第一列数据
                     var firstColumnValue = dataRow[0];
                     // 转换成目标类型数据
-                    var destValue = firstColumnValue.ChangeType(underlyingType);
+                    var destValue = firstColumnValue.Adapt(firstColumnValue.GetType(), underlyingType);
                     // 添加到集合中
                     list.Add(destValue);
                 }
@@ -306,7 +307,7 @@ namespace Fur.DatabaseAccessor
                         if (columnValue == DBNull.Value) continue;
 
                         // 转换成目标类型数据
-                        var destValue = columnValue.ChangeType(property.PropertyType);
+                        var destValue = columnValue.Adapt(columnValue.GetType(), property.PropertyType);
                         property.SetValue(model, destValue);
                     }
 

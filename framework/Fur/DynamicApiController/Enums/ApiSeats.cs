@@ -1,6 +1,7 @@
 ﻿using Fur.DependencyInjection;
+using System.ComponentModel;
 
-namespace Fur.DynamicApiController
+namespace Microsoft.AspNetCore.Mvc
 {
     /// <summary>
     /// 接口参数位置
@@ -11,21 +12,25 @@ namespace Fur.DynamicApiController
         /// <summary>
         /// 控制器之前
         /// </summary>
+        [Description("控制器之前")]
         ControllerStart,
 
         /// <summary>
         /// 控制器之后
         /// </summary>
+        [Description("控制器之后")]
         ControllerEnd,
 
         /// <summary>
         /// 行为之前
         /// </summary>
+        [Description("行为之前")]
         ActionStart,
 
         /// <summary>
         /// 行为之后
         /// </summary>
+        [Description("行为之后")]
         ActionEnd
     }
 }

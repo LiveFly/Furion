@@ -1,8 +1,10 @@
 ﻿using Fur.DependencyInjection;
+using Fur.Extensions;
 using Mapster;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations.Schema;
 using System.Linq;
@@ -27,7 +29,7 @@ namespace Fur.DatabaseAccessor
         private static readonly List<MethodInfo> DbFunctionMethods;
 
         /// <summary>
-        /// 模型构建器 Entity<TEntity> 方法 <see cref="ModelBuilder.Entity{TEntity}"/>
+        /// 创建数据库实体方法
         /// </summary>
         private static readonly MethodInfo ModelBuildEntityMethod;
 
@@ -43,6 +45,8 @@ namespace Fur.DatabaseAccessor
 
             if (EntityCorrelationTypes.Count > 0)
             {
+                DbContextLocatorCorrelationTypes = new ConcurrentDictionary<Type, DbContextCorrelationType>();
+
                 // 获取模型构建器 Entity<T> 方法
                 ModelBuildEntityMethod = typeof(ModelBuilder).GetMethods(BindingFlags.Public | BindingFlags.Instance).FirstOrDefault(u => u.Name == nameof(ModelBuilder.Entity) && u.GetParameters().Length == 0);
             }
@@ -137,14 +141,24 @@ namespace Fur.DatabaseAccessor
         /// <param name="dbContextType">数据库上下文类型</param>
         private static void AddTableAffixes(Type type, AppDbContextAttribute appDbContextAttribute, EntityTypeBuilder entityTypeBuilder, DbContext dbContext, Type dbContextType)
         {
+            // 排除无键实体或已经贴了 [Table] 特性的类型
             if (typeof(IPrivateEntityNotKey).IsAssignableFrom(type) || !string.IsNullOrEmpty(type.GetCustomAttribute<TableAttribute>(true)?.Schema)) return;
 
-            // 获取 多租户 Schema
+            // 判断是否是启用了多租户模式，如果是，则获取 Schema
             var dynamicSchema = !typeof(IMultiTenantOnSchema).IsAssignableFrom(dbContextType)
                 ? default
-                : dbContextType.GetMethod(nameof(IMultiTenantOnSchema.GetSchemaName)).Invoke(dbContext, null).ToString();
+                : dbContextType.GetMethod(nameof(IMultiTenantOnSchema.GetSchemaName)).Invoke(dbContext, null)?.ToString();
 
-            if (appDbContextAttribute == null) entityTypeBuilder.ToTable($"{type.Name}", dynamicSchema);
+            // 获取类型前缀 [TablePrefix] 特性
+            var tablePrefixAttribute = !type.IsDefined(typeof(TablePrefixAttribute), true)
+                ? default
+                : type.GetCustomAttribute<TablePrefixAttribute>(true);
+
+            // 判断是否启用全局表前后缀支持或个别表自定义了前缀
+            if (tablePrefixAttribute != null || appDbContextAttribute == null)
+            {
+                entityTypeBuilder.ToTable($"{tablePrefixAttribute?.Prefix}{type.Name}", dynamicSchema);
+            }
             else
             {
                 // 添加表统一前后缀，排除视图
@@ -315,10 +329,10 @@ namespace Fur.DatabaseAccessor
             // 默认数据库上下文情况
             if (dbContextLocator == typeof(MasterDbContextLocator))
             {
-                // 父类继承 IEntityDependency 类型且不是泛型
-                if (typeof(IPrivateEntity).IsAssignableFrom(baseType) && !baseType.IsGenericType) return true;
+                // 父类等于 Entity/Entity<> 或等于 EntityBase/EntityBase<> 或等于 EntityNotKey
+                if (baseType == typeof(Entity) || baseType == typeof(EntityBase) || baseType.HasImplementedRawGeneric(typeof(Entity<>)) || baseType.HasImplementedRawGeneric(typeof(EntityBase<>)) || baseType == typeof(EntityNotKey)) return true;
 
-                // 接口等于 IEntityDependency 或 IModelBuilderFilter 类型
+                // 接口等于 IEntity 或 IModelBuilderFilter 类型
                 if (interfaces.Any(u => u == typeof(IEntity) || u == typeof(IModelBuilderFilter))) return true;
             }
 
@@ -351,6 +365,11 @@ namespace Fur.DatabaseAccessor
         }
 
         /// <summary>
+        /// 数据库上下文定位器关联类型集合
+        /// </summary>
+        internal static ConcurrentDictionary<Type, DbContextCorrelationType> DbContextLocatorCorrelationTypes;
+
+        /// <summary>
         /// 获取当前数据库上下文关联类型
         /// </summary>
         /// <param name="dbContext">数据库上下文</param>
@@ -358,53 +377,66 @@ namespace Fur.DatabaseAccessor
         /// <returns>DbContextCorrelationType</returns>
         private static DbContextCorrelationType GetDbContextCorrelationType(DbContext dbContext, Type dbContextLocator)
         {
-            var result = new DbContextCorrelationType { DbContextLocator = dbContextLocator };
+            // 读取缓存
+            return DbContextLocatorCorrelationTypes.GetOrAdd(dbContextLocator, Function(dbContext, dbContextLocator));
 
-            // 获取当前数据库上下文关联类型
-            var dbContextEntityCorrelationTypes = EntityCorrelationTypes.Where(u => IsInThisDbContext(dbContextLocator, u));
-
-            // 组装对象
-            foreach (var entityCorrelationType in dbContextEntityCorrelationTypes)
+            // 本地静态方法
+            static DbContextCorrelationType Function(DbContext dbContext, Type dbContextLocator)
             {
-                // 只要继承 IEntityDependency 接口，都是实体
-                if (typeof(IPrivateEntity).IsAssignableFrom(entityCorrelationType))
-                {
-                    // 添加实体
-                    result.EntityTypes.Add(entityCorrelationType);
+                var result = new DbContextCorrelationType { DbContextLocator = dbContextLocator };
 
-                    // 添加无键实体
-                    if (typeof(IPrivateEntityNotKey).IsAssignableFrom(entityCorrelationType))
+                // 获取当前数据库上下文关联类型
+                var dbContextEntityCorrelationTypes = EntityCorrelationTypes.Where(u => IsInThisDbContext(dbContextLocator, u));
+
+                // 组装对象
+                foreach (var entityCorrelationType in dbContextEntityCorrelationTypes)
+                {
+                    // 只要继承 IEntityDependency 接口，都是实体
+                    if (typeof(IPrivateEntity).IsAssignableFrom(entityCorrelationType))
                     {
-                        result.EntityNoKeyTypes.Add(entityCorrelationType);
+                        // 添加实体
+                        result.EntityTypes.Add(entityCorrelationType);
+
+                        // 添加无键实体
+                        if (typeof(IPrivateEntityNotKey).IsAssignableFrom(entityCorrelationType))
+                        {
+                            result.EntityNoKeyTypes.Add(entityCorrelationType);
+                        }
+                    }
+
+                    if (typeof(IPrivateModelBuilder).IsAssignableFrom(entityCorrelationType))
+                    {
+                        // 添加模型构建器
+                        if (entityCorrelationType.HasImplementedRawGeneric(typeof(IPrivateEntityTypeBuilder<>)))
+                        {
+                            result.EntityTypeBuilderTypes.Add(entityCorrelationType);
+                        }
+
+                        // 添加全局筛选器
+                        if (entityCorrelationType.HasImplementedRawGeneric(typeof(IPrivateModelBuilderFilter)))
+                        {
+                            result.ModelBuilderFilterTypes.Add(entityCorrelationType);
+
+                            // 支持 DbContext 继承全局过滤接口
+                            result.ModelBuilderFilterInstances.Add((entityCorrelationType == dbContext.GetType() ? dbContext : Activator.CreateInstance(entityCorrelationType)) as IPrivateModelBuilderFilter);
+                        }
+
+                        // 添加种子数据
+                        if (entityCorrelationType.HasImplementedRawGeneric(typeof(IPrivateEntitySeedData<>)))
+                        {
+                            result.EntitySeedDataTypes.Add(entityCorrelationType);
+                        }
+
+                        // 添加实体数据改变监听
+                        if (entityCorrelationType.HasImplementedRawGeneric(typeof(IPrivateEntityChangedListener<>)))
+                        {
+                            result.EntityChangedTypes.Add(entityCorrelationType);
+                        }
                     }
                 }
 
-                if (typeof(IPrivateModelBuilder).IsAssignableFrom(entityCorrelationType))
-                {
-                    // 添加模型构建器
-                    if (entityCorrelationType.HasImplementedRawGeneric(typeof(IPrivateEntityTypeBuilder<>)))
-                    {
-                        result.EntityTypeBuilderTypes.Add(entityCorrelationType);
-                    }
-
-                    // 添加全局筛选器
-                    if (entityCorrelationType.HasImplementedRawGeneric(typeof(IPrivateModelBuilderFilter)))
-                    {
-                        result.ModelBuilderFilterTypes.Add(entityCorrelationType);
-
-                        // 支持 DbContext 继承全局过滤接口
-                        result.ModelBuilderFilterInstances.Add((entityCorrelationType == dbContext.GetType() ? dbContext : Activator.CreateInstance(entityCorrelationType)) as IPrivateModelBuilderFilter);
-                    }
-
-                    // 添加种子数据
-                    if (entityCorrelationType.HasImplementedRawGeneric(typeof(IPrivateEntitySeedData<>)))
-                    {
-                        result.EntitySeedDataTypes.Add(entityCorrelationType);
-                    }
-                }
+                return result;
             }
-
-            return result;
         }
     }
 }

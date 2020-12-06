@@ -1,7 +1,6 @@
 ﻿using Microsoft.EntityFrameworkCore.ChangeTracking;
 using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.Linq.Expressions;
 using System.Threading;
 using System.Threading.Tasks;
@@ -22,7 +21,7 @@ namespace Fur.DatabaseAccessor
     /// </summary>
     /// <typeparam name="TEntity">实体类型</typeparam>
     /// <typeparam name="TDbContextLocator">数据库上下文定位器</typeparam>
-    public partial interface IOperableRepository<TEntity, TDbContextLocator> : IRepositoryDependency
+    public partial interface IOperableRepository<TEntity, TDbContextLocator> : IPrivateRepository
     where TEntity : class, IPrivateEntity, new()
     where TDbContextLocator : class, IDbContextLocator
     {
@@ -30,48 +29,60 @@ namespace Fur.DatabaseAccessor
         /// 新增或更新一条记录
         /// </summary>
         /// <param name="entity">实体</param>
+        /// <param name="ignoreNullValues"></param>
+        /// <param name="checkProperty"></param>
         /// <returns>代理中的实体</returns>
-        EntityEntry<TEntity> InsertOrUpdate(TEntity entity);
+        EntityEntry<TEntity> InsertOrUpdate(TEntity entity, bool? ignoreNullValues = null, Expression<Func<TEntity, object>> checkProperty = null);
 
         /// <summary>
         /// 新增或更新一条记录
         /// </summary>
         /// <param name="entity">实体</param>
+        /// <param name="ignoreNullValues"></param>
+        /// <param name="checkProperty"></param>
         /// <param name="cancellationToken">取消异步令牌</param>
         /// <returns>代理中的实体</returns>
-        Task<EntityEntry<TEntity>> InsertOrUpdateAsync(TEntity entity, CancellationToken cancellationToken = default);
+        Task<EntityEntry<TEntity>> InsertOrUpdateAsync(TEntity entity, bool? ignoreNullValues = null, Expression<Func<TEntity, object>> checkProperty = null, CancellationToken cancellationToken = default);
 
         /// <summary>
         /// 新增或更新一条记录并立即执行
         /// </summary>
         /// <param name="entity">实体</param>
+        /// <param name="ignoreNullValues"></param>
+        /// <param name="checkProperty"></param>
         /// <returns>数据库中的实体</returns>
-        EntityEntry<TEntity> InsertOrUpdateNow(TEntity entity);
-
-        /// <summary>
-        /// 新增或更新一条记录并立即执行
-        /// </summary>
-        /// <param name="entity">实体</param>
-        /// <param name="acceptAllChangesOnSuccess">接受所有更改</param>
-        /// <returns>数据库中的实体</returns>
-        EntityEntry<TEntity> InsertOrUpdateNow(TEntity entity, bool acceptAllChangesOnSuccess);
-
-        /// <summary>
-        /// 新增或更新一条记录并立即执行
-        /// </summary>
-        /// <param name="entity">实体</param>
-        /// <param name="cancellationToken">取消异步令牌</param>
-        /// <returns>数据库中的实体</returns>
-        Task<EntityEntry<TEntity>> InsertOrUpdateNowAsync(TEntity entity, CancellationToken cancellationToken = default);
+        EntityEntry<TEntity> InsertOrUpdateNow(TEntity entity, bool? ignoreNullValues = null, Expression<Func<TEntity, object>> checkProperty = null);
 
         /// <summary>
         /// 新增或更新一条记录并立即执行
         /// </summary>
         /// <param name="entity">实体</param>
         /// <param name="acceptAllChangesOnSuccess">接受所有更改</param>
+        /// <param name="ignoreNullValues"></param>
+        /// <param name="checkProperty"></param>
+        /// <returns>数据库中的实体</returns>
+        EntityEntry<TEntity> InsertOrUpdateNow(TEntity entity, bool acceptAllChangesOnSuccess, bool? ignoreNullValues = null, Expression<Func<TEntity, object>> checkProperty = null);
+
+        /// <summary>
+        /// 新增或更新一条记录并立即执行
+        /// </summary>
+        /// <param name="entity">实体</param>
+        /// <param name="ignoreNullValues"></param>
+        /// <param name="checkProperty"></param>
         /// <param name="cancellationToken">取消异步令牌</param>
         /// <returns>数据库中的实体</returns>
-        Task<EntityEntry<TEntity>> InsertOrUpdateNowAsync(TEntity entity, bool acceptAllChangesOnSuccess, CancellationToken cancellationToken = default);
+        Task<EntityEntry<TEntity>> InsertOrUpdateNowAsync(TEntity entity, bool? ignoreNullValues = null, Expression<Func<TEntity, object>> checkProperty = null, CancellationToken cancellationToken = default);
+
+        /// <summary>
+        /// 新增或更新一条记录并立即执行
+        /// </summary>
+        /// <param name="entity">实体</param>
+        /// <param name="acceptAllChangesOnSuccess">接受所有更改</param>
+        /// <param name="ignoreNullValues"></param>
+        /// <param name="checkProperty"></param>
+        /// <param name="cancellationToken">取消异步令牌</param>
+        /// <returns>数据库中的实体</returns>
+        Task<EntityEntry<TEntity>> InsertOrUpdateNowAsync(TEntity entity, bool acceptAllChangesOnSuccess, bool? ignoreNullValues = null, Expression<Func<TEntity, object>> checkProperty = null, CancellationToken cancellationToken = default);
 
         /// <summary>
         /// 新增或更新一条特定属性记录
@@ -560,23 +571,5 @@ namespace Fur.DatabaseAccessor
         /// <param name="cancellationToken">取消异步令牌</param>
         /// <returns>数据库中的实体</returns>
         Task<EntityEntry<TEntity>> InsertOrUpdateExcludeNowAsync(TEntity entity, IEnumerable<Expression<Func<TEntity, object>>> propertyPredicates, bool acceptAllChangesOnSuccess, CancellationToken cancellationToken = default);
-
-        /// <summary>
-        /// 执行 Sql 返回 IQueryable
-        /// </summary>
-        /// <param name="sql">sql 语句</param>
-        /// <param name="parameters">命令参数</param>
-        /// <returns>IQueryable<TEntity></returns>
-        IQueryable<TEntity> FromSqlRaw(string sql, params object[] parameters);
-
-        /// <summary>
-        /// 执行 Sql 返回 IQueryable
-        /// </summary>
-        /// <remarks>
-        /// 支持字符串内插语法
-        /// </remarks>
-        /// <param name="sql">sql 语句</param>
-        /// <returns>IQueryable<TEntity></returns>
-        IQueryable<TEntity> FromSqlInterpolated(FormattableString sql);
     }
 }

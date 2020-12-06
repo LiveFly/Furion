@@ -1,8 +1,8 @@
-﻿using Fur.DependencyInjection;
-using Microsoft.AspNetCore.Authorization;
+﻿using Fur.Authorization;
+using Fur.DependencyInjection;
 using System;
 
-namespace Fur.Authorization
+namespace Microsoft.AspNetCore.Authorization
 {
     /// <summary>
     /// 策略授权特性
@@ -16,7 +16,7 @@ namespace Fur.Authorization
         /// <param name="policies">多个策略</param>
         public AppAuthorizeAttribute(params string[] policies)
         {
-            Policies = policies;
+            if (policies != null && policies.Length > 0) Policies = policies;
         }
 
         /// <summary>

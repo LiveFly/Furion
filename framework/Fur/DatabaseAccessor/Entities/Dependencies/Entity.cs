@@ -1,5 +1,6 @@
 ﻿using Fur.DependencyInjection;
 using System;
+using System.Text.Json.Serialization;
 
 namespace Fur.DatabaseAccessor
 {
@@ -15,10 +16,18 @@ namespace Fur.DatabaseAccessor
     /// 数据库实体依赖基类
     /// </summary>
     /// <typeparam name="TKey">主键类型</typeparam>
+    [SkipScan]
+    public abstract class Entity<TKey> : Entity<TKey, MasterDbContextLocator>
+    {
+    }
+
+    /// <summary>
+    /// 数据库实体依赖基类
+    /// </summary>
+    /// <typeparam name="TKey">主键类型</typeparam>
     /// <typeparam name="TDbContextLocator1">数据库上下文定位器</typeparam>
     [SkipScan]
     public abstract class Entity<TKey, TDbContextLocator1> : PrivateEntity<TKey>
-        where TKey : struct
         where TDbContextLocator1 : class, IDbContextLocator
     {
     }
@@ -31,7 +40,6 @@ namespace Fur.DatabaseAccessor
     /// <typeparam name="TDbContextLocator2">数据库上下文定位器</typeparam>
     [SkipScan]
     public abstract class Entity<TKey, TDbContextLocator1, TDbContextLocator2> : PrivateEntity<TKey>
-        where TKey : struct
         where TDbContextLocator1 : class, IDbContextLocator
         where TDbContextLocator2 : class, IDbContextLocator
     {
@@ -46,7 +54,6 @@ namespace Fur.DatabaseAccessor
     /// <typeparam name="TDbContextLocator3">数据库上下文定位器</typeparam>
     [SkipScan]
     public abstract class Entity<TKey, TDbContextLocator1, TDbContextLocator2, TDbContextLocator3> : PrivateEntity<TKey>
-        where TKey : struct
         where TDbContextLocator1 : class, IDbContextLocator
         where TDbContextLocator2 : class, IDbContextLocator
         where TDbContextLocator3 : class, IDbContextLocator
@@ -63,7 +70,6 @@ namespace Fur.DatabaseAccessor
     /// <typeparam name="TDbContextLocator4">数据库上下文定位器</typeparam>
     [SkipScan]
     public abstract class Entity<TKey, TDbContextLocator1, TDbContextLocator2, TDbContextLocator3, TDbContextLocator4> : PrivateEntity<TKey>
-        where TKey : struct
         where TDbContextLocator1 : class, IDbContextLocator
         where TDbContextLocator2 : class, IDbContextLocator
         where TDbContextLocator3 : class, IDbContextLocator
@@ -82,7 +88,6 @@ namespace Fur.DatabaseAccessor
     /// <typeparam name="TDbContextLocator5">数据库上下文定位器</typeparam>
     [SkipScan]
     public abstract class Entity<TKey, TDbContextLocator1, TDbContextLocator2, TDbContextLocator3, TDbContextLocator4, TDbContextLocator5> : PrivateEntity<TKey>
-        where TKey : struct
         where TDbContextLocator1 : class, IDbContextLocator
         where TDbContextLocator2 : class, IDbContextLocator
         where TDbContextLocator3 : class, IDbContextLocator
@@ -103,7 +108,6 @@ namespace Fur.DatabaseAccessor
     /// <typeparam name="TDbContextLocator6">数据库上下文定位器</typeparam>
     [SkipScan]
     public abstract class Entity<TKey, TDbContextLocator1, TDbContextLocator2, TDbContextLocator3, TDbContextLocator4, TDbContextLocator5, TDbContextLocator6> : PrivateEntity<TKey>
-        where TKey : struct
         where TDbContextLocator1 : class, IDbContextLocator
         where TDbContextLocator2 : class, IDbContextLocator
         where TDbContextLocator3 : class, IDbContextLocator
@@ -126,7 +130,6 @@ namespace Fur.DatabaseAccessor
     /// <typeparam name="TDbContextLocator7">数据库上下文定位器</typeparam>
     [SkipScan]
     public abstract class Entity<TKey, TDbContextLocator1, TDbContextLocator2, TDbContextLocator3, TDbContextLocator4, TDbContextLocator5, TDbContextLocator6, TDbContextLocator7> : PrivateEntity<TKey>
-        where TKey : struct
         where TDbContextLocator1 : class, IDbContextLocator
         where TDbContextLocator2 : class, IDbContextLocator
         where TDbContextLocator3 : class, IDbContextLocator
@@ -151,7 +154,6 @@ namespace Fur.DatabaseAccessor
     /// <typeparam name="TDbContextLocator8">数据库上下文定位器</typeparam>
     [SkipScan]
     public abstract class Entity<TKey, TDbContextLocator1, TDbContextLocator2, TDbContextLocator3, TDbContextLocator4, TDbContextLocator5, TDbContextLocator6, TDbContextLocator7, TDbContextLocator8> : PrivateEntity<TKey>
-        where TKey : struct
         where TDbContextLocator1 : class, IDbContextLocator
         where TDbContextLocator2 : class, IDbContextLocator
         where TDbContextLocator3 : class, IDbContextLocator
@@ -169,22 +171,21 @@ namespace Fur.DatabaseAccessor
     /// <typeparam name="TKey">主键类型</typeparam>
     [SkipScan]
     public abstract class PrivateEntity<TKey> : PrivateEntityBase<TKey>
-        where TKey : struct
     {
         /// <summary>
         /// 创建时间
         /// </summary>
-        public DateTimeOffset CreatedTime { get; set; }
+        public virtual DateTimeOffset CreatedTime { get; set; }
 
         /// <summary>
         /// 更新时间
         /// </summary>
-        public DateTimeOffset? UpdatedTime { get; set; }
+        public virtual DateTimeOffset? UpdatedTime { get; set; }
 
         /// <summary>
         /// 软删除
         /// </summary>
-        [FakeDelete(true)]
-        public bool IsDeleted { get; set; }
+        [JsonIgnore, FakeDelete(true)]
+        public virtual bool IsDeleted { get; set; }
     }
 }

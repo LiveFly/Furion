@@ -20,7 +20,7 @@ namespace Fur.DatabaseAccessor
         /// </summary>
         /// <typeparam name="TEntity">实体</typeparam>
         /// <typeparam name="TDbContextLocator">数据库上下文定位器</typeparam>
-        /// <returns>DbSet<TEntity></returns>
+        /// <returns>DbSet{TEntity}</returns>
         public static DbSet<TEntity> Ethnics<TEntity, TDbContextLocator>(this TEntity entity)
             where TEntity : class, IPrivateEntity, new()
             where TDbContextLocator : class, IDbContextLocator
@@ -34,12 +34,13 @@ namespace Fur.DatabaseAccessor
         /// <typeparam name="TEntity">实体</typeparam>
         /// <typeparam name="TDbContextLocator">数据库上下文定位器</typeparam>
         /// <param name="entity">实体</param>
+        /// <param name="ignoreNullValues"></param>
         /// <returns>代理的实体</returns>
-        public static EntityEntry<TEntity> Insert<TEntity, TDbContextLocator>(this TEntity entity)
+        public static EntityEntry<TEntity> Insert<TEntity, TDbContextLocator>(this TEntity entity, bool? ignoreNullValues = null)
             where TEntity : class, IPrivateEntity, new()
             where TDbContextLocator : class, IDbContextLocator
         {
-            return Db.GetRepository<TEntity, TDbContextLocator>().Insert(entity);
+            return Db.GetRepository<TEntity, TDbContextLocator>().Insert(entity, ignoreNullValues);
         }
 
         /// <summary>
@@ -48,12 +49,14 @@ namespace Fur.DatabaseAccessor
         /// <typeparam name="TEntity">实体</typeparam>
         /// <typeparam name="TDbContextLocator">数据库上下文定位器</typeparam>
         /// <param name="entity">实体</param>
+        /// <param name="ignoreNullValues"></param>
+        /// <param name="cancellationToken">异步取消令牌</param>
         /// <returns>代理的实体</returns>
-        public static Task<EntityEntry<TEntity>> InsertAsync<TEntity, TDbContextLocator>(this TEntity entity, CancellationToken cancellationToken = default)
+        public static Task<EntityEntry<TEntity>> InsertAsync<TEntity, TDbContextLocator>(this TEntity entity, bool? ignoreNullValues = null, CancellationToken cancellationToken = default)
             where TEntity : class, IPrivateEntity, new()
             where TDbContextLocator : class, IDbContextLocator
         {
-            return Db.GetRepository<TEntity, TDbContextLocator>().InsertAsync(entity, cancellationToken);
+            return Db.GetRepository<TEntity, TDbContextLocator>().InsertAsync(entity, ignoreNullValues, cancellationToken);
         }
 
         /// <summary>
@@ -62,12 +65,13 @@ namespace Fur.DatabaseAccessor
         /// <typeparam name="TEntity">实体</typeparam>
         /// <typeparam name="TDbContextLocator">数据库上下文定位器</typeparam>
         /// <param name="entity">实体</param>
+        /// <param name="ignoreNullValues"></param>
         /// <returns>数据库中的实体</returns>
-        public static EntityEntry<TEntity> InsertNow<TEntity, TDbContextLocator>(this TEntity entity)
+        public static EntityEntry<TEntity> InsertNow<TEntity, TDbContextLocator>(this TEntity entity, bool? ignoreNullValues = null)
             where TEntity : class, IPrivateEntity, new()
             where TDbContextLocator : class, IDbContextLocator
         {
-            return Db.GetRepository<TEntity, TDbContextLocator>().InsertNow(entity);
+            return Db.GetRepository<TEntity, TDbContextLocator>().InsertNow(entity, ignoreNullValues);
         }
 
         /// <summary>
@@ -76,12 +80,14 @@ namespace Fur.DatabaseAccessor
         /// <typeparam name="TEntity">实体</typeparam>
         /// <typeparam name="TDbContextLocator">数据库上下文定位器</typeparam>
         /// <param name="entity">实体</param>
+        /// <param name="acceptAllChangesOnSuccess">接受所有提交更改</param>
+        /// <param name="ignoreNullValues"></param>
         /// <returns>数据库中的实体</returns>
-        public static EntityEntry<TEntity> InsertNow<TEntity, TDbContextLocator>(this TEntity entity, bool acceptAllChangesOnSuccess)
+        public static EntityEntry<TEntity> InsertNow<TEntity, TDbContextLocator>(this TEntity entity, bool acceptAllChangesOnSuccess, bool? ignoreNullValues = null)
             where TEntity : class, IPrivateEntity, new()
             where TDbContextLocator : class, IDbContextLocator
         {
-            return Db.GetRepository<TEntity, TDbContextLocator>().InsertNow(entity, acceptAllChangesOnSuccess);
+            return Db.GetRepository<TEntity, TDbContextLocator>().InsertNow(entity, acceptAllChangesOnSuccess, ignoreNullValues);
         }
 
         /// <summary>
@@ -90,12 +96,14 @@ namespace Fur.DatabaseAccessor
         /// <typeparam name="TEntity">实体</typeparam>
         /// <typeparam name="TDbContextLocator">数据库上下文定位器</typeparam>
         /// <param name="entity">实体</param>
+        /// <param name="ignoreNullValues"></param>
+        /// <param name="cancellationToken">异步取消令牌</param>
         /// <returns>数据库中的实体</returns>
-        public static Task<EntityEntry<TEntity>> InsertNowAsync<TEntity, TDbContextLocator>(this TEntity entity, CancellationToken cancellationToken = default)
+        public static Task<EntityEntry<TEntity>> InsertNowAsync<TEntity, TDbContextLocator>(this TEntity entity, bool? ignoreNullValues = null, CancellationToken cancellationToken = default)
             where TEntity : class, IPrivateEntity, new()
             where TDbContextLocator : class, IDbContextLocator
         {
-            return Db.GetRepository<TEntity, TDbContextLocator>().InsertNowAsync(entity, cancellationToken);
+            return Db.GetRepository<TEntity, TDbContextLocator>().InsertNowAsync(entity, ignoreNullValues, cancellationToken);
         }
 
         /// <summary>
@@ -104,12 +112,15 @@ namespace Fur.DatabaseAccessor
         /// <typeparam name="TEntity">实体</typeparam>
         /// <typeparam name="TDbContextLocator">数据库上下文定位器</typeparam>
         /// <param name="entity">实体</param>
+        /// <param name="acceptAllChangesOnSuccess">接受所有提交更改</param>
+        /// <param name="ignoreNullValues"></param>
+        /// <param name="cancellationToken">异步取消令牌</param>
         /// <returns>数据库中的实体</returns>
-        public static Task<EntityEntry<TEntity>> InsertNowAsync<TEntity, TDbContextLocator>(this TEntity entity, bool acceptAllChangesOnSuccess, CancellationToken cancellationToken = default)
+        public static Task<EntityEntry<TEntity>> InsertNowAsync<TEntity, TDbContextLocator>(this TEntity entity, bool acceptAllChangesOnSuccess, bool? ignoreNullValues = null, CancellationToken cancellationToken = default)
             where TEntity : class, IPrivateEntity, new()
             where TDbContextLocator : class, IDbContextLocator
         {
-            return Db.GetRepository<TEntity, TDbContextLocator>().InsertNowAsync(entity, acceptAllChangesOnSuccess, cancellationToken);
+            return Db.GetRepository<TEntity, TDbContextLocator>().InsertNowAsync(entity, acceptAllChangesOnSuccess, ignoreNullValues, cancellationToken);
         }
 
         /// <summary>
@@ -118,12 +129,13 @@ namespace Fur.DatabaseAccessor
         /// <typeparam name="TEntity">实体</typeparam>
         /// <typeparam name="TDbContextLocator">数据库上下文定位器</typeparam>
         /// <param name="entity">实体</param>
+        /// <param name="ignoreNullValues"></param>
         /// <returns>代理中的实体</returns>
-        public static EntityEntry<TEntity> Update<TEntity, TDbContextLocator>(this TEntity entity)
+        public static EntityEntry<TEntity> Update<TEntity, TDbContextLocator>(this TEntity entity, bool? ignoreNullValues = null)
             where TEntity : class, IPrivateEntity, new()
             where TDbContextLocator : class, IDbContextLocator
         {
-            return Db.GetRepository<TEntity, TDbContextLocator>().Update(entity);
+            return Db.GetRepository<TEntity, TDbContextLocator>().Update(entity, ignoreNullValues);
         }
 
         /// <summary>
@@ -132,12 +144,13 @@ namespace Fur.DatabaseAccessor
         /// <typeparam name="TEntity">实体</typeparam>
         /// <typeparam name="TDbContextLocator">数据库上下文定位器</typeparam>
         /// <param name="entity">实体</param>
+        /// <param name="ignoreNullValues"></param>
         /// <returns>代理中的实体</returns>
-        public static Task<EntityEntry<TEntity>> UpdateAsync<TEntity, TDbContextLocator>(this TEntity entity)
+        public static Task<EntityEntry<TEntity>> UpdateAsync<TEntity, TDbContextLocator>(this TEntity entity, bool? ignoreNullValues = null)
              where TEntity : class, IPrivateEntity, new()
              where TDbContextLocator : class, IDbContextLocator
         {
-            return Db.GetRepository<TEntity, TDbContextLocator>().UpdateAsync(entity);
+            return Db.GetRepository<TEntity, TDbContextLocator>().UpdateAsync(entity, ignoreNullValues);
         }
 
         /// <summary>
@@ -146,12 +159,13 @@ namespace Fur.DatabaseAccessor
         /// <typeparam name="TEntity">实体</typeparam>
         /// <typeparam name="TDbContextLocator">数据库上下文定位器</typeparam>
         /// <param name="entity">实体</param>
+        /// <param name="ignoreNullValues"></param>
         /// <returns>数据库中的实体</returns>
-        public static EntityEntry<TEntity> UpdateNow<TEntity, TDbContextLocator>(this TEntity entity)
+        public static EntityEntry<TEntity> UpdateNow<TEntity, TDbContextLocator>(this TEntity entity, bool? ignoreNullValues = null)
             where TEntity : class, IPrivateEntity, new()
             where TDbContextLocator : class, IDbContextLocator
         {
-            return Db.GetRepository<TEntity, TDbContextLocator>().UpdateNow(entity);
+            return Db.GetRepository<TEntity, TDbContextLocator>().UpdateNow(entity, ignoreNullValues);
         }
 
         /// <summary>
@@ -161,12 +175,13 @@ namespace Fur.DatabaseAccessor
         /// <typeparam name="TDbContextLocator">数据库上下文定位器</typeparam>
         /// <param name="entity">实体</param>
         /// <param name="acceptAllChangesOnSuccess">接受所有更改</param>
+        /// <param name="ignoreNullValues"></param>
         /// <returns>数据库中的实体</returns>
-        public static EntityEntry<TEntity> UpdateNow<TEntity, TDbContextLocator>(this TEntity entity, bool acceptAllChangesOnSuccess)
+        public static EntityEntry<TEntity> UpdateNow<TEntity, TDbContextLocator>(this TEntity entity, bool acceptAllChangesOnSuccess, bool? ignoreNullValues = null)
              where TEntity : class, IPrivateEntity, new()
             where TDbContextLocator : class, IDbContextLocator
         {
-            return Db.GetRepository<TEntity, TDbContextLocator>().UpdateNow(entity, acceptAllChangesOnSuccess);
+            return Db.GetRepository<TEntity, TDbContextLocator>().UpdateNow(entity, acceptAllChangesOnSuccess, ignoreNullValues);
         }
 
         /// <summary>
@@ -175,13 +190,14 @@ namespace Fur.DatabaseAccessor
         /// <typeparam name="TEntity">实体</typeparam>
         /// <typeparam name="TDbContextLocator">数据库上下文定位器</typeparam>
         /// <param name="entity">实体</param>
+        /// <param name="ignoreNullValues"></param>
         /// <param name="cancellationToken">取消异步令牌</param>
         /// <returns>数据库中的实体</returns>
-        public static Task<EntityEntry<TEntity>> UpdateNowAsync<TEntity, TDbContextLocator>(this TEntity entity, CancellationToken cancellationToken = default)
+        public static Task<EntityEntry<TEntity>> UpdateNowAsync<TEntity, TDbContextLocator>(this TEntity entity, bool? ignoreNullValues = null, CancellationToken cancellationToken = default)
             where TEntity : class, IPrivateEntity, new()
             where TDbContextLocator : class, IDbContextLocator
         {
-            return Db.GetRepository<TEntity, TDbContextLocator>().UpdateNowAsync(entity, cancellationToken);
+            return Db.GetRepository<TEntity, TDbContextLocator>().UpdateNowAsync(entity, ignoreNullValues, cancellationToken);
         }
 
         /// <summary>
@@ -191,13 +207,14 @@ namespace Fur.DatabaseAccessor
         /// <typeparam name="TDbContextLocator">数据库上下文定位器</typeparam>
         /// <param name="entity">实体</param>
         /// <param name="acceptAllChangesOnSuccess">接受所有更改</param>
+        /// <param name="ignoreNullValues"></param>
         /// <param name="cancellationToken">取消异步令牌</param>
         /// <returns>数据库中的实体</returns>
-        public static Task<EntityEntry<TEntity>> UpdateNowAsync<TEntity, TDbContextLocator>(this TEntity entity, bool acceptAllChangesOnSuccess, CancellationToken cancellationToken = default)
+        public static Task<EntityEntry<TEntity>> UpdateNowAsync<TEntity, TDbContextLocator>(this TEntity entity, bool acceptAllChangesOnSuccess, bool? ignoreNullValues = null, CancellationToken cancellationToken = default)
             where TEntity : class, IPrivateEntity, new()
             where TDbContextLocator : class, IDbContextLocator
         {
-            return Db.GetRepository<TEntity, TDbContextLocator>().UpdateNowAsync(entity, acceptAllChangesOnSuccess, cancellationToken);
+            return Db.GetRepository<TEntity, TDbContextLocator>().UpdateNowAsync(entity, acceptAllChangesOnSuccess, ignoreNullValues, cancellationToken);
         }
 
         /// <summary>
@@ -1106,12 +1123,14 @@ namespace Fur.DatabaseAccessor
         /// <typeparam name="TEntity">实体</typeparam>
         /// <typeparam name="TDbContextLocator">数据库上下文定位器</typeparam>
         /// <param name="entity">实体</param>
+        /// <param name="ignoreNullValues"></param>
+        /// <param name="checkProperty"></param>
         /// <returns>代理中的实体</returns>
-        public static EntityEntry<TEntity> InsertOrUpdate<TEntity, TDbContextLocator>(this TEntity entity)
+        public static EntityEntry<TEntity> InsertOrUpdate<TEntity, TDbContextLocator>(this TEntity entity, bool? ignoreNullValues = null, Expression<Func<TEntity, object>> checkProperty = null)
             where TEntity : class, IPrivateEntity, new()
             where TDbContextLocator : class, IDbContextLocator
         {
-            return Db.GetRepository<TEntity, TDbContextLocator>().InsertOrUpdate(entity);
+            return Db.GetRepository<TEntity, TDbContextLocator>().InsertOrUpdate(entity, ignoreNullValues, checkProperty);
         }
 
         /// <summary>
@@ -1120,13 +1139,15 @@ namespace Fur.DatabaseAccessor
         /// <typeparam name="TEntity">实体</typeparam>
         /// <typeparam name="TDbContextLocator">数据库上下文定位器</typeparam>
         /// <param name="entity">实体</param>
+        /// <param name="ignoreNullValues"></param>
+        /// <param name="checkProperty"></param>
         /// <param name="cancellationToken">取消异步令牌</param>
         /// <returns>代理中的实体</returns>
-        public static Task<EntityEntry<TEntity>> InsertOrUpdateAsync<TEntity, TDbContextLocator>(this TEntity entity, CancellationToken cancellationToken = default)
+        public static Task<EntityEntry<TEntity>> InsertOrUpdateAsync<TEntity, TDbContextLocator>(this TEntity entity, bool? ignoreNullValues = null, Expression<Func<TEntity, object>> checkProperty = null, CancellationToken cancellationToken = default)
             where TEntity : class, IPrivateEntity, new()
             where TDbContextLocator : class, IDbContextLocator
         {
-            return Db.GetRepository<TEntity, TDbContextLocator>().InsertOrUpdateAsync(entity, cancellationToken);
+            return Db.GetRepository<TEntity, TDbContextLocator>().InsertOrUpdateAsync(entity, ignoreNullValues, checkProperty, cancellationToken);
         }
 
         /// <summary>
@@ -1135,42 +1156,14 @@ namespace Fur.DatabaseAccessor
         /// <typeparam name="TEntity">实体</typeparam>
         /// <typeparam name="TDbContextLocator">数据库上下文定位器</typeparam>
         /// <param name="entity">实体</param>
+        /// <param name="ignoreNullValues"></param>
+        /// <param name="checkProperty"></param>
         /// <returns>数据库中的实体</returns>
-        public static EntityEntry<TEntity> InsertOrUpdateNow<TEntity, TDbContextLocator>(this TEntity entity)
+        public static EntityEntry<TEntity> InsertOrUpdateNow<TEntity, TDbContextLocator>(this TEntity entity, bool? ignoreNullValues = null, Expression<Func<TEntity, object>> checkProperty = null)
             where TEntity : class, IPrivateEntity, new()
             where TDbContextLocator : class, IDbContextLocator
         {
-            return Db.GetRepository<TEntity, TDbContextLocator>().InsertOrUpdateNow(entity);
-        }
-
-        /// <summary>
-        /// 新增或更新一条记录并立即执行
-        /// </summary>
-        /// <typeparam name="TEntity">实体</typeparam>
-        /// <typeparam name="TDbContextLocator">数据库上下文定位器</typeparam>
-        /// <param name="entity">实体</param>
-        /// <param name="acceptAllChangesOnSuccess">接受所有更改</param>
-        /// <returns>数据库中的实体</returns>
-        public static EntityEntry<TEntity> InsertOrUpdateNow<TEntity, TDbContextLocator>(this TEntity entity, bool acceptAllChangesOnSuccess)
-            where TEntity : class, IPrivateEntity, new()
-            where TDbContextLocator : class, IDbContextLocator
-        {
-            return Db.GetRepository<TEntity, TDbContextLocator>().InsertOrUpdateNow(entity, acceptAllChangesOnSuccess);
-        }
-
-        /// <summary>
-        /// 新增或更新一条记录并立即执行
-        /// </summary>
-        /// <typeparam name="TEntity">实体</typeparam>
-        /// <typeparam name="TDbContextLocator">数据库上下文定位器</typeparam>
-        /// <param name="entity">实体</param>
-        /// <param name="cancellationToken">取消异步令牌</param>
-        /// <returns>数据库中的实体</returns>
-        public static Task<EntityEntry<TEntity>> InsertOrUpdateNowAsync<TEntity, TDbContextLocator>(this TEntity entity, CancellationToken cancellationToken = default)
-            where TEntity : class, IPrivateEntity, new()
-            where TDbContextLocator : class, IDbContextLocator
-        {
-            return Db.GetRepository<TEntity, TDbContextLocator>().InsertOrUpdateNowAsync(entity, cancellationToken);
+            return Db.GetRepository<TEntity, TDbContextLocator>().InsertOrUpdateNow(entity, ignoreNullValues, checkProperty);
         }
 
         /// <summary>
@@ -1180,13 +1173,49 @@ namespace Fur.DatabaseAccessor
         /// <typeparam name="TDbContextLocator">数据库上下文定位器</typeparam>
         /// <param name="entity">实体</param>
         /// <param name="acceptAllChangesOnSuccess">接受所有更改</param>
-        /// <param name="cancellationToken">取消异步令牌</param>
+        /// <param name="ignoreNullValues"></param>
+        /// <param name="checkProperty"></param>
         /// <returns>数据库中的实体</returns>
-        public static Task<EntityEntry<TEntity>> InsertOrUpdateNowAsync<TEntity, TDbContextLocator>(this TEntity entity, bool acceptAllChangesOnSuccess, CancellationToken cancellationToken = default)
+        public static EntityEntry<TEntity> InsertOrUpdateNow<TEntity, TDbContextLocator>(this TEntity entity, bool acceptAllChangesOnSuccess, bool? ignoreNullValues = null, Expression<Func<TEntity, object>> checkProperty = null)
             where TEntity : class, IPrivateEntity, new()
             where TDbContextLocator : class, IDbContextLocator
         {
-            return Db.GetRepository<TEntity, TDbContextLocator>().InsertOrUpdateNowAsync(entity, acceptAllChangesOnSuccess, cancellationToken);
+            return Db.GetRepository<TEntity, TDbContextLocator>().InsertOrUpdateNow(entity, acceptAllChangesOnSuccess, ignoreNullValues, checkProperty);
+        }
+
+        /// <summary>
+        /// 新增或更新一条记录并立即执行
+        /// </summary>
+        /// <typeparam name="TEntity">实体</typeparam>
+        /// <typeparam name="TDbContextLocator">数据库上下文定位器</typeparam>
+        /// <param name="entity">实体</param>
+        /// <param name="ignoreNullValues"></param>
+        /// <param name="checkProperty"></param>
+        /// <param name="cancellationToken">取消异步令牌</param>
+        /// <returns>数据库中的实体</returns>
+        public static Task<EntityEntry<TEntity>> InsertOrUpdateNowAsync<TEntity, TDbContextLocator>(this TEntity entity, bool? ignoreNullValues = null, Expression<Func<TEntity, object>> checkProperty = null, CancellationToken cancellationToken = default)
+            where TEntity : class, IPrivateEntity, new()
+            where TDbContextLocator : class, IDbContextLocator
+        {
+            return Db.GetRepository<TEntity, TDbContextLocator>().InsertOrUpdateNowAsync(entity, ignoreNullValues, checkProperty, cancellationToken);
+        }
+
+        /// <summary>
+        /// 新增或更新一条记录并立即执行
+        /// </summary>
+        /// <typeparam name="TEntity">实体</typeparam>
+        /// <typeparam name="TDbContextLocator">数据库上下文定位器</typeparam>
+        /// <param name="entity">实体</param>
+        /// <param name="acceptAllChangesOnSuccess">接受所有更改</param>
+        /// <param name="ignoreNullValues"></param>
+        /// <param name="checkProperty"></param>
+        /// <param name="cancellationToken">取消异步令牌</param>
+        /// <returns>数据库中的实体</returns>
+        public static Task<EntityEntry<TEntity>> InsertOrUpdateNowAsync<TEntity, TDbContextLocator>(this TEntity entity, bool acceptAllChangesOnSuccess, bool? ignoreNullValues = null, Expression<Func<TEntity, object>> checkProperty = null, CancellationToken cancellationToken = default)
+            where TEntity : class, IPrivateEntity, new()
+            where TDbContextLocator : class, IDbContextLocator
+        {
+            return Db.GetRepository<TEntity, TDbContextLocator>().InsertOrUpdateNowAsync(entity, acceptAllChangesOnSuccess, ignoreNullValues, checkProperty, cancellationToken);
         }
 
         /// <summary>

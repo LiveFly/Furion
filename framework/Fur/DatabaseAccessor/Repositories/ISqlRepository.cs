@@ -16,7 +16,7 @@ namespace Fur.DatabaseAccessor
     public interface ISqlRepository<TDbContextLocator>
         : ISqlExecutableRepository<TDbContextLocator>
         , ISqlQueryableRepository<TDbContextLocator>
-        , IRepositoryDependency
+        , IPrivateRepository
        where TDbContextLocator : class, IDbContextLocator
     {
         /// <summary>
@@ -31,5 +31,21 @@ namespace Fur.DatabaseAccessor
         /// <returns>仓储</returns>
         ISqlRepository<TChangeDbContextLocator> Change<TChangeDbContextLocator>()
             where TChangeDbContextLocator : class, IDbContextLocator;
+
+        /// <summary>
+        /// 解析服务
+        /// </summary>
+        /// <typeparam name="TService"></typeparam>
+        /// <returns></returns>
+        TService GetService<TService>()
+            where TService : class;
+
+        /// <summary>
+        /// 解析服务
+        /// </summary>
+        /// <typeparam name="TService"></typeparam>
+        /// <returns></returns>
+        TService GetRequiredService<TService>()
+            where TService : class;
     }
 }

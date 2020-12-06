@@ -28,14 +28,14 @@ namespace Fur.DatabaseAccessor
         /// 构造函数
         /// </summary>
         /// <param name="dbContextResolve">数据库上下文解析器</param>
-        /// <param name="dbContextPool">数据库上下文池</param>
         /// <param name="repository">非泛型仓储</param>
         /// <param name="serviceProvider">服务提供器</param>
+        /// <param name="dbContextPool"></param>
         public EFCoreRepository(
             Func<Type, IScoped, DbContext> dbContextResolve
-            , IDbContextPool dbContextPool
             , IRepository repository
-            , IServiceProvider serviceProvider) : base(dbContextResolve, dbContextPool, repository, serviceProvider)
+            , IServiceProvider serviceProvider
+            , IDbContextPool dbContextPool) : base(dbContextResolve, repository, serviceProvider, dbContextPool)
         {
         }
     }
@@ -97,19 +97,37 @@ namespace Fur.DatabaseAccessor
         /// <summary>
         /// 获取多数据库上下文 Sql 操作仓储
         /// </summary>
-        /// <returns>ISqlRepository<TDbContextLocator></returns>
+        /// <returns>ISqlRepository{TDbContextLocator}</returns>
         public virtual ISqlRepository<TDbContextLocator> Sql<TDbContextLocator>()
              where TDbContextLocator : class, IDbContextLocator
         {
             return _serviceProvider.GetService<ISqlRepository<TDbContextLocator>>();
+        }
+
+        /// <summary>
+        /// 解析服务
+        /// </summary>
+        /// <typeparam name="TService"></typeparam>
+        /// <returns></returns>
+        public virtual TService GetService<TService>()
+        {
+            return _serviceProvider.GetService<TService>();
+        }
+
+        /// <summary>
+        /// 解析服务
+        /// </summary>
+        /// <typeparam name="TService"></typeparam>
+        /// <returns></returns>
+        public virtual TService GetRequiredService<TService>()
+        {
+            return _serviceProvider.GetRequiredService<TService>();
         }
     }
 
     /// <summary>
     /// 多数据库上下文仓储
     /// </summary>
-    /// <typeparam name="TEntity">实体类型</typeparam>
-    /// <typeparam name="TDbContextLocator">数据库上下文定位器</typeparam>
     [SkipScan]
     public partial class EFCoreRepository<TEntity, TDbContextLocator> : SqlRepository<TDbContextLocator>, IRepository<TEntity, TDbContextLocator>
         where TEntity : class, IPrivateEntity, new()
@@ -129,21 +147,18 @@ namespace Fur.DatabaseAccessor
         /// 构造函数
         /// </summary>
         /// <param name="dbContextResolve">数据库上下文解析器</param>
-        /// <param name="dbContextPool">数据库上下文池</param>
         /// <param name="repository">非泛型仓储</param>
         /// <param name="serviceProvider">服务提供器</param>
+        /// <param name="dbContextPool"></param>
         public EFCoreRepository(
             Func<Type, IScoped, DbContext> dbContextResolve
-            , IDbContextPool dbContextPool
             , IRepository repository
-            , IServiceProvider serviceProvider) : base(dbContextResolve, dbContextPool, serviceProvider)
+            , IServiceProvider serviceProvider
+            , IDbContextPool dbContextPool) : base(dbContextResolve, serviceProvider)
         {
-            _dbContextPool = dbContextPool;
-
             // 解析数据库上下文
             var dbContext = dbContextResolve(typeof(TDbContextLocator), default);
-            // 保存当前数据库上下文到池中
-            _dbContextPool.AddToPool(dbContext);
+            _dbContextPool = dbContextPool;
 
             // 配置数据库上下文
             DynamicDbContext = DbContext = dbContext;
@@ -331,7 +346,7 @@ namespace Fur.DatabaseAccessor
         /// </summary>
         /// <param name="entity">实体</param>
         /// <param name="entityState">实体状态</param>
-        /// <returns>EntityEntry<TEntity></returns>
+        /// <returns>EntityEntry{TEntity}</returns>
         public virtual EntityEntry<TEntity> ChangeEntityState(TEntity entity, EntityState entityState)
         {
             var entityEntry = Entry(entity);
@@ -356,7 +371,7 @@ namespace Fur.DatabaseAccessor
         /// </summary>
         /// <param name="entityEntry">实体条目</param>
         /// <param name="entityState">实体状态</param>
-        /// <returns>EntityEntry<TEntity></returns>
+        /// <returns>EntityEntry{TEntity}</returns>
         public virtual EntityEntry<TEntity> ChangeEntityState(EntityEntry<TEntity> entityEntry, EntityState entityState)
         {
             entityEntry.State = entityState;
@@ -427,7 +442,7 @@ namespace Fur.DatabaseAccessor
         /// <param name="entity">实体</param>
         public virtual void Detach(object entity)
         {
-            ChangeEntityState(entity, EntityState.Deleted);
+            ChangeEntityState(entity, EntityState.Detached);
         }
 
         /// <summary>
@@ -436,7 +451,7 @@ namespace Fur.DatabaseAccessor
         /// <param name="entity">实体</param>
         public virtual void Detach(TEntity entity)
         {
-            ChangeEntityState(entity, EntityState.Deleted);
+            ChangeEntityState(entity, EntityState.Detached);
         }
 
         /// <summary>
@@ -445,7 +460,7 @@ namespace Fur.DatabaseAccessor
         /// <param name="entityEntry">实体条目</param>
         public virtual void Detach(EntityEntry entityEntry)
         {
-            ChangeEntityState(entityEntry, EntityState.Deleted);
+            ChangeEntityState(entityEntry, EntityState.Detached);
         }
 
         /// <summary>
@@ -454,13 +469,13 @@ namespace Fur.DatabaseAccessor
         /// <param name="entityEntry">实体条目</param>
         public virtual void Detach(EntityEntry<TEntity> entityEntry)
         {
-            ChangeEntityState(entityEntry, EntityState.Deleted);
+            ChangeEntityState(entityEntry, EntityState.Detached);
         }
 
         /// <summary>
         /// 获取所有数据库上下文
         /// </summary>
-        /// <returns>ConcurrentBag<DbContext></returns>
+        /// <returns>ConcurrentBag{DbContext}</returns>
         public ConcurrentBag<DbContext> GetDbContexts()
         {
             return _dbContextPool.GetDbContexts();
@@ -512,6 +527,7 @@ namespace Fur.DatabaseAccessor
         /// 动态改变表名
         /// </summary>
         /// <param name="tableName">表名</param>
+        [Obsolete("该方法已过时，调用将抛出空异常")]
         public virtual void ChangeTable(string tableName)
         {
             if (EntityType is IConventionEntityType convention)
@@ -526,7 +542,7 @@ namespace Fur.DatabaseAccessor
         /// <param name="connectionString">连接字符串</param>
         public virtual void ChangeDatabase(string connectionString)
         {
-            if (DbConnection.State.HasFlag(ConnectionState.Open)) DbConnection.ChangeDatabase(connectionString);
+            if (DbConnection.State == ConnectionState.Open) DbConnection.ChangeDatabase(connectionString);
             else DbConnection.ConnectionString = connectionString;
         }
 
@@ -537,7 +553,7 @@ namespace Fur.DatabaseAccessor
         /// <param name="cancellationToken">异步取消令牌</param>
         public virtual async Task ChangeDatabaseAsync(string connectionString, CancellationToken cancellationToken = default)
         {
-            if (DbConnection.State.HasFlag(ConnectionState.Open))
+            if (DbConnection.State == ConnectionState.Open)
             {
                 await DbConnection.ChangeDatabaseAsync(connectionString, cancellationToken);
             }
@@ -668,10 +684,10 @@ namespace Fur.DatabaseAccessor
         /// <typeparam name="TRestrainRepository">特定仓储</typeparam>
         /// <returns>TRestrainRepository</returns>
         public virtual TRestrainRepository Constraint<TRestrainRepository>()
-            where TRestrainRepository : class, IRepositoryDependency
+            where TRestrainRepository : class, IPrivateRepository
         {
             var type = typeof(TRestrainRepository);
-            if (!type.IsInterface || typeof(IRepositoryDependency) == type || type.Name.Equals(nameof(IRepository)) || (type.IsGenericType && type.GetGenericTypeDefinition().Name.Equals(nameof(IRepository))))
+            if (!type.IsInterface || typeof(IPrivateRepository) == type || type.Name.Equals(nameof(IRepository)) || (type.IsGenericType && type.GetGenericTypeDefinition().Name.Equals(nameof(IRepository))))
             {
                 throw new InvalidCastException("Invalid type conversion");
             }

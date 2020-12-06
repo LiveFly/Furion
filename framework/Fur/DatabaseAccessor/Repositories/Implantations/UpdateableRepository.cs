@@ -12,8 +12,6 @@ namespace Fur.DatabaseAccessor
     /// <summary>
     /// 可更新仓储分部类
     /// </summary>
-    /// <typeparam name="TEntity">实体类型</typeparam>
-    /// <typeparam name="TDbContextLocator">数据库上下文定位器</typeparam>
     public partial class EFCoreRepository<TEntity, TDbContextLocator>
         where TEntity : class, IPrivateEntity, new()
         where TDbContextLocator : class, IDbContextLocator
@@ -22,10 +20,16 @@ namespace Fur.DatabaseAccessor
         /// 更新一条记录
         /// </summary>
         /// <param name="entity">实体</param>
+        /// <param name="ignoreNullValues"></param>
         /// <returns>代理中的实体</returns>
-        public virtual EntityEntry<TEntity> Update(TEntity entity)
+        public virtual EntityEntry<TEntity> Update(TEntity entity, bool? ignoreNullValues = null)
         {
-            return Entities.Update(entity);
+            var entityEntry = Entities.Update(entity);
+
+            // 忽略空值
+            IgnoreNullValues(ref entity, ignoreNullValues);
+
+            return entityEntry;
         }
 
         /// <summary>
@@ -50,10 +54,11 @@ namespace Fur.DatabaseAccessor
         /// 更新一条记录
         /// </summary>
         /// <param name="entity">实体</param>
+        /// <param name="ignoreNullValues"></param>
         /// <returns>代理中的实体</returns>
-        public virtual Task<EntityEntry<TEntity>> UpdateAsync(TEntity entity)
+        public virtual Task<EntityEntry<TEntity>> UpdateAsync(TEntity entity, bool? ignoreNullValues = null)
         {
-            return Task.FromResult(Update(entity));
+            return Task.FromResult(Update(entity, ignoreNullValues));
         }
 
         /// <summary>
@@ -82,10 +87,11 @@ namespace Fur.DatabaseAccessor
         /// 更新一条记录并立即提交
         /// </summary>
         /// <param name="entity">实体</param>
+        /// <param name="ignoreNullValues"></param>
         /// <returns>数据库中的实体</returns>
-        public virtual EntityEntry<TEntity> UpdateNow(TEntity entity)
+        public virtual EntityEntry<TEntity> UpdateNow(TEntity entity, bool? ignoreNullValues = null)
         {
-            var entityEntry = Update(entity);
+            var entityEntry = Update(entity, ignoreNullValues);
             SaveNow();
             return entityEntry;
         }
@@ -95,10 +101,11 @@ namespace Fur.DatabaseAccessor
         /// </summary>
         /// <param name="entity">实体</param>
         /// <param name="acceptAllChangesOnSuccess">接受所有更改</param>
+        /// <param name="ignoreNullValues"></param>
         /// <returns>数据库中的实体</returns>
-        public virtual EntityEntry<TEntity> UpdateNow(TEntity entity, bool acceptAllChangesOnSuccess)
+        public virtual EntityEntry<TEntity> UpdateNow(TEntity entity, bool acceptAllChangesOnSuccess, bool? ignoreNullValues = null)
         {
-            var entityEntry = Update(entity);
+            var entityEntry = Update(entity, ignoreNullValues);
             SaveNow(acceptAllChangesOnSuccess);
             return entityEntry;
         }
@@ -150,10 +157,11 @@ namespace Fur.DatabaseAccessor
         /// </summary>
         /// <param name="entity">实体</param>
         /// <param name="cancellationToken">取消异步令牌</param>
+        /// <param name="ignoreNullValues"></param>
         /// <returns>数据库中的实体</returns>
-        public virtual async Task<EntityEntry<TEntity>> UpdateNowAsync(TEntity entity, CancellationToken cancellationToken = default)
+        public virtual async Task<EntityEntry<TEntity>> UpdateNowAsync(TEntity entity, bool? ignoreNullValues = null, CancellationToken cancellationToken = default)
         {
-            var entityEntry = await UpdateAsync(entity);
+            var entityEntry = await UpdateAsync(entity, ignoreNullValues);
             await SaveNowAsync(cancellationToken);
             return entityEntry;
         }
@@ -163,11 +171,12 @@ namespace Fur.DatabaseAccessor
         /// </summary>
         /// <param name="entity">实体</param>
         /// <param name="acceptAllChangesOnSuccess">接受所有更改</param>
+        /// <param name="ignoreNullValues"></param>
         /// <param name="cancellationToken">取消异步令牌</param>
         /// <returns>数据库中的实体</returns>
-        public virtual async Task<EntityEntry<TEntity>> UpdateNowAsync(TEntity entity, bool acceptAllChangesOnSuccess, CancellationToken cancellationToken = default)
+        public virtual async Task<EntityEntry<TEntity>> UpdateNowAsync(TEntity entity, bool acceptAllChangesOnSuccess, bool? ignoreNullValues = null, CancellationToken cancellationToken = default)
         {
-            var entityEntry = await UpdateAsync(entity);
+            var entityEntry = await UpdateAsync(entity, ignoreNullValues);
             await SaveNowAsync(acceptAllChangesOnSuccess, cancellationToken);
             return entityEntry;
         }
@@ -241,7 +250,7 @@ namespace Fur.DatabaseAccessor
         /// <returns>代理中的实体</returns>
         public virtual EntityEntry<TEntity> UpdateInclude(TEntity entity, params string[] propertyNames)
         {
-            var entityEntry = ChangeEntityState(entity, EntityState.Unchanged);
+            var entityEntry = ChangeEntityState(entity, EntityState.Detached);
             foreach (var propertyName in propertyNames)
             {
                 EntityPropertyEntry(entity, propertyName).IsModified = true;
@@ -257,12 +266,21 @@ namespace Fur.DatabaseAccessor
         /// <returns>代理中的实体</returns>
         public virtual EntityEntry<TEntity> UpdateInclude(TEntity entity, params Expression<Func<TEntity, object>>[] propertyPredicates)
         {
-            var entityEntry = ChangeEntityState(entity, EntityState.Unchanged);
-            foreach (var propertyPredicate in propertyPredicates)
+            // 判断是非参数只有一个，且是一个匿名类型
+            if (propertyPredicates?.Length == 1 && propertyPredicates[0].Body is NewExpression newExpression)
             {
-                EntityPropertyEntry(entity, propertyPredicate).IsModified = true;
+                var propertyNames = newExpression.Members.Select(u => u.Name);
+                return UpdateInclude(entity, propertyNames);
             }
-            return entityEntry;
+            else
+            {
+                var entityEntry = ChangeEntityState(entity, EntityState.Detached);
+                foreach (var propertyPredicate in propertyPredicates)
+                {
+                    EntityPropertyEntry(entity, propertyPredicate).IsModified = true;
+                }
+                return entityEntry;
+            }
         }
 
         /// <summary>
@@ -605,12 +623,21 @@ namespace Fur.DatabaseAccessor
         /// <returns>代理中的实体</returns>
         public virtual EntityEntry<TEntity> UpdateExclude(TEntity entity, params Expression<Func<TEntity, object>>[] propertyPredicates)
         {
-            var entityEntry = ChangeEntityState(entity, EntityState.Modified);
-            foreach (var propertyPredicate in propertyPredicates)
+            // 判断是非参数只有一个，且是一个匿名类型
+            if (propertyPredicates?.Length == 1 && propertyPredicates[0].Body is NewExpression newExpression)
             {
-                EntityPropertyEntry(entity, propertyPredicate).IsModified = false;
+                var propertyNames = newExpression.Members.Select(u => u.Name);
+                return UpdateExclude(entity, propertyNames);
             }
-            return entityEntry;
+            else
+            {
+                var entityEntry = ChangeEntityState(entity, EntityState.Modified);
+                foreach (var propertyPredicate in propertyPredicates)
+                {
+                    EntityPropertyEntry(entity, propertyPredicate).IsModified = false;
+                }
+                return entityEntry;
+            }
         }
 
         /// <summary>

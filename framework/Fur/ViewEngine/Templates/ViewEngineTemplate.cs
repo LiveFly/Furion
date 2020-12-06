@@ -2,7 +2,6 @@
 using System.Text;
 using System.Threading.Tasks;
 
-// reference：https://github.com/adoconnection/RazorEngineCore
 namespace Fur.ViewEngine
 {
     /// <summary>
@@ -14,7 +13,7 @@ namespace Fur.ViewEngine
         /// <summary>
         /// 字符串构建器
         /// </summary>
-        private readonly StringBuilder stringBuilder = new StringBuilder();
+        private readonly StringBuilder stringBuilder = new();
 
         /// <summary>
         /// 特性后缀

@@ -1,7 +1,7 @@
 ﻿using Fur.DependencyInjection;
+using Fur.Extensions;
+using Fur.Utilities;
 using Microsoft.AspNetCore.Hosting;
-using Microsoft.AspNetCore.Http;
-using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyModel;
@@ -13,7 +13,6 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 using System.Runtime.Loader;
-using System.Threading;
 
 namespace Fur
 {
@@ -37,37 +36,10 @@ namespace Fur
             get
             {
                 if (_settings == null)
-                    _settings = GetOptions<AppSettingsOptions>();
+                    _settings = GetDuplicateOptions<AppSettingsOptions>();
                 return _settings;
             }
         }
-
-        /// <summary>
-        /// 瞬时服务提供器，每次都是不一样的实例
-        /// </summary>
-        public static IServiceProvider Services => InternalApp.InternalServices.BuildServiceProvider();
-
-        /// <summary>
-        /// 应用服务提供器
-        /// </summary>
-        /// <remarks>
-        /// 通过它可以获取第三方容器注入的服务，也就是不是 asp.net core 托管的，或者自己实现 Ioc/DI 的方式
-        /// 如采用 autofac 替换默认 IOC 容器，这样就可以通过 Application.GetAutofacRoot() 获取 Autofac容器对象，无需采用静态类手工存储该容器
-        /// </remarks>
-        /// <example>
-        /// <code>
-        /// var container = Application.GetAutofacRoot();
-        /// var service = container.Resolve(typeof(TService));
-        /// </code>
-        /// </example>
-        public static IServiceProvider ApplicationServices { get; internal set; }
-
-        /// <summary>
-        /// 请求服务提供器，相当于使用构造函数注入方式
-        /// </summary>
-        /// <remarks>每一个请求一个作用域，由于基于请求，所以可能有空异常</remarks>
-        /// <exception cref="ArgumentNullException">空异常</exception>
-        public static IServiceProvider RequestServices => GetService<IHttpContextAccessor>()?.HttpContext?.RequestServices;
 
         /// <summary>
         /// 全局配置选项
@@ -75,9 +47,22 @@ namespace Fur
         public static readonly IConfiguration Configuration;
 
         /// <summary>
+        /// 私有环境变量，避免重复解析
+        /// </summary>
+        private static IWebHostEnvironment _webHostEnvironment;
+
+        /// <summary>
         /// 应用环境，如，是否是开发环境，生产环境等
         /// </summary>
-        public static IWebHostEnvironment HostEnvironment => GetService<IWebHostEnvironment>();
+        public static IWebHostEnvironment WebHostEnvironment
+        {
+            get
+            {
+                if (_webHostEnvironment == null)
+                    _webHostEnvironment = GetDuplicateService<IWebHostEnvironment>();
+                return _webHostEnvironment;
+            }
+        }
 
         /// <summary>
         /// 应用有效程序集
@@ -90,62 +75,50 @@ namespace Fur
         public static readonly IEnumerable<Type> CanBeScanTypes;
 
         /// <summary>
-        /// 应用所有启动配置对象
+        /// 瞬时服务提供器，每次都是不一样的实例
         /// </summary>
-        internal static ConcurrentBag<AppStartup> Startups;
+        public static IServiceProvider ServiceProvider => InternalApp.InternalServices.BuildServiceProvider();
 
         /// <summary>
-        /// 构造函数
-        /// </summary>
-        static App()
-        {
-            Configuration = InternalApp.ConfigurationBuilder.Build();
-
-            Assemblies = GetAssemblies();
-            CanBeScanTypes = Assemblies.SelectMany(u => u.GetTypes()
-                .Where(u => u.IsPublic && !u.IsDefined(typeof(SkipScanAttribute), false)));
-
-            Startups = new ConcurrentBag<AppStartup>();
-        }
-
-        /// <summary>
-        /// 获取瞬时服务
-        /// </summary>
-        /// <typeparam name="TService">服务</typeparam>
-        /// <returns></returns>
-        public static TService GetService<TService>()
-        {
-            return Services.GetService<TService>();
-        }
-
-        /// <summary>
-        /// 获取作用域服务
+        /// 获取请求生命周期的服务
         /// </summary>
         /// <typeparam name="TService"></typeparam>
         /// <returns></returns>
-        public static TService GetRequestService<TService>()
+        public static TService GetService<TService>()
+            where TService : class
         {
-            return RequestServices.GetService<TService>();
+            return GetService(typeof(TService)) as TService;
         }
 
         /// <summary>
-        /// 获取瞬时服务
-        /// </summary>
-        /// <param name="type">类型</param>
-        /// <returns></returns>
-        public static object GetService(Type type)
-        {
-            return Services.GetService(type);
-        }
-
-        /// <summary>
-        /// 获取作用域服务
+        /// 获取请求生命周期的服务
         /// </summary>
         /// <param name="type"></param>
         /// <returns></returns>
-        public static object GetRequestService(Type type)
+        public static object GetService(Type type)
         {
-            return RequestServices.GetService(type);
+            return HttpContextUtility.GetCurrentHttpContext()?.RequestServices?.GetService(type);
+        }
+
+        /// <summary>
+        /// 获取请求生命周期的服务
+        /// </summary>
+        /// <typeparam name="TService"></typeparam>
+        /// <returns></returns>
+        public static TService GetRequiredService<TService>()
+            where TService : class
+        {
+            return GetRequiredService(typeof(TService)) as TService;
+        }
+
+        /// <summary>
+        /// 获取请求生命周期的服务
+        /// </summary>
+        /// <param name="type"></param>
+        /// <returns></returns>
+        public static object GetRequiredService(Type type)
+        {
+            return HttpContextUtility.GetCurrentHttpContext()?.RequestServices?.GetRequiredService(type);
         }
 
         /// <summary>
@@ -168,7 +141,7 @@ namespace Fur
         public static TOptions GetOptions<TOptions>()
             where TOptions : class, new()
         {
-            return GetService<IOptions<TOptions>>().Value;
+            return GetService<IOptions<TOptions>>()?.Value;
         }
 
         /// <summary>
@@ -179,7 +152,7 @@ namespace Fur
         public static TOptions GetOptionsMonitor<TOptions>()
             where TOptions : class, new()
         {
-            return GetService<IOptionsMonitor<TOptions>>().CurrentValue;
+            return GetService<IOptionsMonitor<TOptions>>()?.CurrentValue;
         }
 
         /// <summary>
@@ -190,7 +163,29 @@ namespace Fur
         public static TOptions GetOptionsSnapshot<TOptions>()
             where TOptions : class, new()
         {
-            return GetService<IOptionsSnapshot<TOptions>>().Value;
+            return GetService<IOptionsSnapshot<TOptions>>()?.Value;
+        }
+
+        /// <summary>
+        /// 获取服务副本
+        /// </summary>
+        /// <typeparam name="TService"></typeparam>
+        /// <returns></returns>
+        public static TService GetDuplicateService<TService>()
+            where TService : class
+        {
+            return ServiceProvider.GetService<TService>();
+        }
+
+        /// <summary>
+        /// 获取选项副本
+        /// </summary>
+        /// <typeparam name="TOptions"></typeparam>
+        /// <returns></returns>
+        public static TOptions GetDuplicateOptions<TOptions>()
+            where TOptions : class, new()
+        {
+            return GetDuplicateService<IOptions<TOptions>>().Value;
         }
 
         /// <summary>
@@ -206,18 +201,36 @@ namespace Fur
             if (Settings.InjectMiniProfiler != true) return;
 
             // 打印消息
-            var caseCategory = Thread.CurrentThread.CurrentCulture.TextInfo.ToTitleCase(category);
-            var customTiming = MiniProfiler.Current.CustomTiming(category, string.IsNullOrEmpty(message) ? $"{caseCategory} {state}" : message, state);
+            var customTiming = MiniProfiler.Current.CustomTiming(category, string.IsNullOrEmpty(message) ? $"{category.ToTitleCase()} {state}" : message, state);
 
             // 判断是否是警告消息
             if (isError) customTiming.Errored = true;
         }
 
         /// <summary>
+        /// 构造函数
+        /// </summary>
+        static App()
+        {
+            Configuration = InternalApp.ConfigurationBuilder.Build();
+
+            Assemblies = GetAssemblies();
+            CanBeScanTypes = Assemblies.SelectMany(u => u.GetTypes()
+                .Where(u => u.IsPublic && !u.IsDefined(typeof(SkipScanAttribute), false)));
+
+            AppStartups = new ConcurrentBag<AppStartup>();
+        }
+
+        /// <summary>
+        /// 应用所有启动配置对象
+        /// </summary>
+        internal static ConcurrentBag<AppStartup> AppStartups;
+
+        /// <summary>
         /// 获取应用有效程序集
         /// </summary>
         /// <returns>IEnumerable</returns>
-        internal static IEnumerable<Assembly> GetAssemblies()
+        private static IEnumerable<Assembly> GetAssemblies()
         {
             // 需排除的程序集后缀
             var excludeAssemblyNames = new string[] {
@@ -248,21 +261,5 @@ namespace Fur
 
             return scanAssemblies;
         }
-    }
-
-    /// <summary>
-    /// 内部 App 副本
-    /// </summary>
-    internal static class InternalApp
-    {
-        /// <summary>
-        /// 应用服务
-        /// </summary>
-        internal static IServiceCollection InternalServices;
-
-        /// <summary>
-        /// 全局配置构建器
-        /// </summary>
-        internal static IConfigurationBuilder ConfigurationBuilder;
     }
 }

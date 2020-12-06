@@ -1,8 +1,8 @@
-﻿using Fur.DependencyInjection;
-using System.ComponentModel.DataAnnotations;
+﻿using Fur.DataValidation;
+using Fur.DependencyInjection;
 using System.Linq;
 
-namespace Fur.DataValidation
+namespace System.ComponentModel.DataAnnotations
 {
     /// <summary>
     /// 数据类型验证特性
@@ -39,8 +39,12 @@ namespace Fur.DataValidation
         /// <returns></returns>
         protected override ValidationResult IsValid(object value, ValidationContext validationContext)
         {
+            // 如果值等于默认值，则跳过验证
+            if (value == default || (AllowNullOrEmptyStrings && value.Equals(string.Empty))) return ValidationResult.Success;
+
             // 执行值验证
             var dataValidationResult = value.TryValidate(ValidationPattern, ValidationTypes);
+            dataValidationResult.MemberOrValue = validationContext.MemberName;
 
             // 验证失败
             if (!dataValidationResult.IsValid)
@@ -61,5 +65,10 @@ namespace Fur.DataValidation
         /// 验证逻辑
         /// </summary>
         public ValidationPattern ValidationPattern { get; set; }
+
+        /// <summary>
+        /// 允许NULL或空字符串（也就是空字符串和Null都是通过的）
+        /// </summary>
+        public bool AllowNullOrEmptyStrings { get; set; } = true;
     }
 }

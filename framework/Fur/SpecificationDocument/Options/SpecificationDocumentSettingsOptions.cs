@@ -1,5 +1,6 @@
 using Fur.ConfigurableOptions;
 using Microsoft.Extensions.Configuration;
+using Microsoft.OpenApi.Models;
 using Swashbuckle.AspNetCore.SwaggerUI;
 using System;
 using System.Linq;
@@ -37,6 +38,11 @@ namespace Fur.SpecificationDocument
         public string RoutePrefix { get; set; }
 
         /// <summary>
+        /// 配置虚拟目录
+        /// </summary>
+        public string VirtualPath { get; set; }
+
+        /// <summary>
         /// 文档展开设置
         /// </summary>
         public DocExpansion? DocExpansionState { get; set; }
@@ -55,6 +61,16 @@ namespace Fur.SpecificationDocument
         /// 安全定义
         /// </summary>
         public SpecificationOpenApiSecurityScheme[] SecurityDefinitions { get; set; }
+
+        /// <summary>
+        /// 配置 Servers
+        /// </summary>
+        public OpenApiServer[] Servers { get; set; }
+
+        /// <summary>
+        /// 隐藏 Servers
+        /// </summary>
+        public bool? HideServers { get; set; }
 
         /// <summary>
         /// 后期配置
@@ -77,6 +93,8 @@ namespace Fur.SpecificationDocument
                 }
             };
             SecurityDefinitions ??= Array.Empty<SpecificationOpenApiSecurityScheme>();
+            Servers ??= Array.Empty<OpenApiServer>();
+            HideServers ??= false;
         }
     }
 }

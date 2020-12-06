@@ -1,7 +1,7 @@
 module.exports = {
   title: "Fur",
   tagline: "Fur 是 .NET 5 平台下企业应用开发最佳实践框架。",
-  url: "https://chinadot.net",
+  url: "https://furos.cn",
   baseUrl: "/fur/",
   onBrokenLinks: "throw",
   favicon: "img/favicon.ico",
@@ -30,8 +30,12 @@ module.exports = {
           position: "left",
         },
         { to: "blog", label: "博客", position: "left" },
-        { label: "配置", position: "left" },
-        { label: "视频", position: "right" },
+        { label: "社区", position: "left", href: "https://chinadot.net" },
+        {
+          label: "视频",
+          position: "right",
+          href: "https://space.bilibili.com/695987967",
+        },
         {
           label: "工具",
           position: "right",
@@ -70,7 +74,7 @@ module.exports = {
           items: [
             {
               label: "入门",
-              to: "docs",
+              to: "docs/get-start",
             },
             {
               label: "指南",

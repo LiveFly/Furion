@@ -185,7 +185,7 @@ namespace Fur.Application
 
 :::note 小提示
 
-如果文档注释没有显示，请检查项目 `属性->生成->输出` 中XML文档是否配置输出路径。
+如果文档注释没有显示，请检查项目 `属性->生成->输出` 中 XML 文档是否配置输出路径。
 
 :::
 
@@ -336,7 +336,7 @@ namespace Fur.Application
         "Title": "分组标题",
         "Description": "这里是分组描述",
         "Version": "版本号",
-        "TermsOfService": "https://chinadot.net",
+        "TermsOfService": "https://furos.cn",
         "Contact": {
           "Name": "百小僧",
           "Url": "https://gitee.com/monksoul",
@@ -627,23 +627,27 @@ namespace Fur.Application
 - `XmlComments`：程序集注释描述文件名（可带 `.xml`，`string`，默认 `Fur.Application, Fur.Web.Entry, Fur.Web.Core`
 - `GroupOpenApiInfos`：分组信息配置，`SpecificationOpenApiInfo[]`，默认 `{ 'Group': 'Default'}`
 - `SecurityDefinitions`：安全策略定义配置，`SpecificationOpenApiSecurityScheme[]`，默认 `[]`
+- `Servers`：配置 Server 下拉列表，`OpenApiServer[]` 类型，默认 `[]`，如：`{Servers:[ { Url:"地址", Description:"描述"} ]}`
+- `HideServers`：是否隐藏 Server 下拉列表，`bool` 类型，默认 `false`
 
 ## 6.7 统一返回值模型
 
 `Fur` 框架提供 `规范化结果` 功能，可以通过实现 `IUnifyResultProvider` 提供器实现统一规范化返回值定制，如：`RESTfulResultProvider`：
 
-```cs
+```cs {13,14}
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Filters;
 using Microsoft.AspNetCore.Mvc.ModelBinding;
 using System.Collections.Generic;
+using System.Threading.Tasks;
 
 namespace Fur.UnifyResult
 {
     /// <summary>
     /// RESTful 风格返回值
     /// </summary>
+    [UnifyModel(typeof(RESTfulResult<>))]
     public class RESTfulResultProvider : IUnifyResultProvider
     {
         /// <summary>
@@ -653,12 +657,15 @@ namespace Fur.UnifyResult
         /// <returns></returns>
         public IActionResult OnException(ExceptionContext context)
         {
-            return new JsonResult(new RESTfulResult
+            // 解析异常信息
+            var (ErrorCode, ErrorObject) = UnifyResultContext.GetExceptionMetadata(context);
+
+            return new JsonResult(new RESTfulResult<object>
             {
-                StatusCode = StatusCodes.Status500InternalServerError,
+                StatusCode = ErrorCode,
                 Successed = false,
                 Data = null,
-                Errors = context.Exception.Message
+                Errors = ErrorObject
             });
         }
 
@@ -676,9 +683,9 @@ namespace Fur.UnifyResult
             else if (context.Result is ObjectResult objectResult) data = objectResult.Value;
             else return null;
 
-            return new JsonResult(new RESTfulResult
+            return new JsonResult(new RESTfulResult<object>
             {
-                StatusCode = context.Result is EmptyResult ? StatusCodes.Status204NoContent : StatusCodes.Status200OK,
+                StatusCode = context.Result is EmptyResult ? StatusCodes.Status204NoContent : StatusCodes.Status200OK,  // 处理没有返回值情况 204
                 Successed = true,
                 Data = data,
                 Errors = null
@@ -695,13 +702,49 @@ namespace Fur.UnifyResult
         /// <returns></returns>
         public IActionResult OnValidateFailed(ActionExecutingContext context, ModelStateDictionary modelStates, Dictionary<string, IEnumerable<string>> validationResults, string validateFaildMessage)
         {
-            return new JsonResult(new RESTfulResult
+            return new JsonResult(new RESTfulResult<object>
             {
                 StatusCode = StatusCodes.Status400BadRequest,
                 Successed = false,
                 Data = null,
                 Errors = validationResults
             });
+        }
+
+        /// <summary>
+        /// 处理输出状态码
+        /// </summary>
+        /// <param name="context"></param>
+        /// <param name="statusCode"></param>
+        /// <returns></returns>
+        public async Task OnResponseStatusCodes(HttpContext context, int statusCode)
+        {
+            switch (statusCode)
+            {
+                // 处理 401 状态码
+                case StatusCodes.Status401Unauthorized:
+                    await context.Response.WriteAsJsonAsync(new RESTfulResult<object>
+                    {
+                        StatusCode = StatusCodes.Status401Unauthorized,
+                        Successed = false,
+                        Data = null,
+                        Errors = "401 Unauthorized"
+                    });
+                    break;
+                // 处理 403 状态码
+                case StatusCodes.Status403Forbidden:
+                    await context.Response.WriteAsJsonAsync(new RESTfulResult<object>
+                    {
+                        StatusCode = StatusCodes.Status403Forbidden,
+                        Successed = false,
+                        Data = null,
+                        Errors = "403 Forbidden"
+                    });
+                    break;
+
+                default:
+                    break;
+            }
         }
     }
 }
@@ -710,7 +753,8 @@ namespace Fur.UnifyResult
 之后在 `Startup.cs` 中注册即可：
 
 ```cs
-services.AddControllers().AddUnifyResult<RESTfulResult, RESTfulResultProvider>();
+services.AddControllers()
+        .AddInjectWithUnifyResult<RESTfulResultProvider>();
 ```
 
 ## 6.8 反馈与建议

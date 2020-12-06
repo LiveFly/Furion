@@ -1,5 +1,6 @@
 ﻿using Fur.DependencyInjection;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using System;
 using System.Data;
 using System.Data.Common;
 using System.Threading;
@@ -28,7 +29,7 @@ namespace Fur.DatabaseAccessor
             sql = DbHelpers.ResolveSqlConfiguration(sql);
 
             // 初始化数据库连接对象和数据库命令对象
-            var (dbConnection, dbCommand) = databaseFacade.PrepareDbCommand(sql, parameters, commandType);
+            var (_, dbCommand) = databaseFacade.PrepareDbCommand(sql, parameters, commandType);
 
             // 读取数据
             using var dbDataReader = dbCommand.ExecuteReader(behavior);
@@ -36,10 +37,6 @@ namespace Fur.DatabaseAccessor
             // 填充到 DataTable
             using var dataTable = new DataTable();
             dataTable.Load(dbDataReader);
-
-            // 关闭连接
-            dbDataReader.Close();
-            dbConnection.Close();
 
             // 清空命令参数
             dbCommand.Parameters.Clear();
@@ -62,7 +59,7 @@ namespace Fur.DatabaseAccessor
             sql = DbHelpers.ResolveSqlConfiguration(sql);
 
             // 初始化数据库连接对象和数据库命令对象
-            var (dbConnection, dbCommand, dbParameters) = databaseFacade.PrepareDbCommand(sql, model, commandType);
+            var (_, dbCommand, dbParameters) = databaseFacade.PrepareDbCommand(sql, model, commandType);
 
             // 读取数据
             using var dbDataReader = dbCommand.ExecuteReader(behavior);
@@ -70,10 +67,6 @@ namespace Fur.DatabaseAccessor
             // 填充到 DataTable
             using var dataTable = new DataTable();
             dataTable.Load(dbDataReader);
-
-            // 关闭连接
-            dbDataReader.Close();
-            dbConnection.Close();
 
             // 清空命令参数
             dbCommand.Parameters.Clear();
@@ -97,7 +90,7 @@ namespace Fur.DatabaseAccessor
             sql = DbHelpers.ResolveSqlConfiguration(sql);
 
             // 初始化数据库连接对象和数据库命令对象
-            var (dbConnection, dbCommand) = await databaseFacade.PrepareDbCommandAsync(sql, parameters, commandType, cancellationToken);
+            var (_, dbCommand) = await databaseFacade.PrepareDbCommandAsync(sql, parameters, commandType, cancellationToken);
 
             // 读取数据
             using var dbDataReader = await dbCommand.ExecuteReaderAsync(behavior, cancellationToken);
@@ -105,10 +98,6 @@ namespace Fur.DatabaseAccessor
             // 填充到 DataTable
             using var dataTable = new DataTable();
             dataTable.Load(dbDataReader);
-
-            // 关闭连接
-            await dbDataReader.CloseAsync();
-            await dbConnection.CloseAsync();
 
             // 清空命令参数
             dbCommand.Parameters.Clear();
@@ -132,7 +121,7 @@ namespace Fur.DatabaseAccessor
             sql = DbHelpers.ResolveSqlConfiguration(sql);
 
             // 初始化数据库连接对象和数据库命令对象
-            var (dbConnection, dbCommand, dbParameters) = await databaseFacade.PrepareDbCommandAsync(sql, model, commandType, cancellationToken);
+            var (_, dbCommand, dbParameters) = await databaseFacade.PrepareDbCommandAsync(sql, model, commandType, cancellationToken);
 
             // 读取数据
             using var dbDataReader = await dbCommand.ExecuteReaderAsync(behavior, cancellationToken);
@@ -140,10 +129,6 @@ namespace Fur.DatabaseAccessor
             // 填充到 DataTable
             using var dataTable = new DataTable();
             dataTable.Load(dbDataReader);
-
-            // 关闭连接
-            await dbDataReader.CloseAsync();
-            await dbConnection.CloseAsync();
 
             // 清空命令参数
             dbCommand.Parameters.Clear();
@@ -165,13 +150,10 @@ namespace Fur.DatabaseAccessor
             sql = DbHelpers.ResolveSqlConfiguration(sql);
 
             // 初始化数据库连接对象和数据库命令对象
-            var (dbConnection, dbCommand) = databaseFacade.PrepareDbCommand(sql, parameters, commandType);
+            var (_, dbCommand) = databaseFacade.PrepareDbCommand(sql, parameters, commandType);
 
             // 执行返回受影响行数
             var rowEffects = dbCommand.ExecuteNonQuery();
-
-            // 关闭连接
-            dbConnection.Close();
 
             // 清空命令参数
             dbCommand.Parameters.Clear();
@@ -193,13 +175,10 @@ namespace Fur.DatabaseAccessor
             sql = DbHelpers.ResolveSqlConfiguration(sql);
 
             // 初始化数据库连接对象和数据库命令对象
-            var (dbConnection, dbCommand, dbParameters) = databaseFacade.PrepareDbCommand(sql, model, commandType);
+            var (_, dbCommand, dbParameters) = databaseFacade.PrepareDbCommand(sql, model, commandType);
 
             // 执行返回受影响行数
             var rowEffects = dbCommand.ExecuteNonQuery();
-
-            // 关闭连接
-            dbConnection.Close();
 
             // 清空命令参数
             dbCommand.Parameters.Clear();
@@ -222,13 +201,10 @@ namespace Fur.DatabaseAccessor
             sql = DbHelpers.ResolveSqlConfiguration(sql);
 
             // 初始化数据库连接对象和数据库命令对象
-            var (dbConnection, dbCommand) = await databaseFacade.PrepareDbCommandAsync(sql, parameters, commandType, cancellationToken);
+            var (_, dbCommand) = await databaseFacade.PrepareDbCommandAsync(sql, parameters, commandType, cancellationToken);
 
             // 执行返回受影响行数
             var rowEffects = await dbCommand.ExecuteNonQueryAsync(cancellationToken);
-
-            // 关闭连接
-            await dbConnection.CloseAsync();
 
             // 清空命令参数
             dbCommand.Parameters.Clear();
@@ -251,13 +227,10 @@ namespace Fur.DatabaseAccessor
             sql = DbHelpers.ResolveSqlConfiguration(sql);
 
             // 初始化数据库连接对象和数据库命令对象
-            var (dbConnection, dbCommand, dbParameters) = await databaseFacade.PrepareDbCommandAsync(sql, model, commandType, cancellationToken);
+            var (_, dbCommand, dbParameters) = await databaseFacade.PrepareDbCommandAsync(sql, model, commandType, cancellationToken);
 
             // 执行返回受影响行数
             var rowEffects = await dbCommand.ExecuteNonQueryAsync(cancellationToken);
-
-            // 关闭连接
-            await dbConnection.CloseAsync();
 
             // 清空命令参数
             dbCommand.Parameters.Clear();
@@ -279,18 +252,15 @@ namespace Fur.DatabaseAccessor
             sql = DbHelpers.ResolveSqlConfiguration(sql);
 
             // 初始化数据库连接对象和数据库命令对象
-            var (dbConnection, dbCommand) = databaseFacade.PrepareDbCommand(sql, parameters, commandType);
+            var (_, dbCommand) = databaseFacade.PrepareDbCommand(sql, parameters, commandType);
 
             // 执行返回单行单列的值
             var result = dbCommand.ExecuteScalar();
 
-            // 关闭连接
-            dbConnection.Close();
-
             // 清空命令参数
             dbCommand.Parameters.Clear();
 
-            return result;
+            return result != DBNull.Value ? result : default;
         }
 
         /// <summary>
@@ -307,18 +277,15 @@ namespace Fur.DatabaseAccessor
             sql = DbHelpers.ResolveSqlConfiguration(sql);
 
             // 初始化数据库连接对象和数据库命令对象
-            var (dbConnection, dbCommand, dbParameters) = databaseFacade.PrepareDbCommand(sql, model, commandType);
+            var (_, dbCommand, dbParameters) = databaseFacade.PrepareDbCommand(sql, model, commandType);
 
             // 执行返回单行单列的值
             var result = dbCommand.ExecuteScalar();
 
-            // 关闭连接
-            dbConnection.Close();
-
             // 清空命令参数
             dbCommand.Parameters.Clear();
 
-            return (result, dbParameters);
+            return (result != DBNull.Value ? result : default, dbParameters);
         }
 
         /// <summary>
@@ -336,18 +303,15 @@ namespace Fur.DatabaseAccessor
             sql = DbHelpers.ResolveSqlConfiguration(sql);
 
             // 初始化数据库连接对象和数据库命令对象
-            var (dbConnection, dbCommand) = await databaseFacade.PrepareDbCommandAsync(sql, parameters, commandType, cancellationToken);
+            var (_, dbCommand) = await databaseFacade.PrepareDbCommandAsync(sql, parameters, commandType, cancellationToken);
 
             // 执行返回单行单列的值
             var result = await dbCommand.ExecuteScalarAsync(cancellationToken);
 
-            // 关闭连接
-            await dbConnection.CloseAsync();
-
             // 清空命令参数
             dbCommand.Parameters.Clear();
 
-            return result;
+            return result != DBNull.Value ? result : default;
         }
 
         /// <summary>
@@ -365,18 +329,15 @@ namespace Fur.DatabaseAccessor
             sql = DbHelpers.ResolveSqlConfiguration(sql);
 
             // 初始化数据库连接对象和数据库命令对象
-            var (dbConnection, dbCommand, dbParameters) = await databaseFacade.PrepareDbCommandAsync(sql, model, commandType, cancellationToken);
+            var (_, dbCommand, dbParameters) = await databaseFacade.PrepareDbCommandAsync(sql, model, commandType, cancellationToken);
 
             // 执行返回单行单列的值
             var result = await dbCommand.ExecuteScalarAsync(cancellationToken);
 
-            // 关闭连接
-            await dbConnection.CloseAsync();
-
             // 清空命令参数
             dbCommand.Parameters.Clear();
 
-            return (result, dbParameters);
+            return (result != DBNull.Value ? result : default, dbParameters);
         }
 
         /// <summary>
@@ -393,14 +354,11 @@ namespace Fur.DatabaseAccessor
             sql = DbHelpers.ResolveSqlConfiguration(sql);
 
             // 初始化数据库连接对象、数据库命令对象和数据库适配器对象
-            var (dbConnection, dbCommand, dbDataAdapter) = databaseFacade.PrepareDbDbDataAdapter(sql, parameters, commandType);
+            var (_, dbCommand, dbDataAdapter) = databaseFacade.PrepareDbDbDataAdapter(sql, parameters, commandType);
 
             // 填充DataSet
             using var dataSet = new DataSet();
             dbDataAdapter.Fill(dataSet);
-
-            // 关闭连接
-            dbConnection.Close();
 
             // 清空命令参数
             dbCommand.Parameters.Clear();
@@ -422,14 +380,11 @@ namespace Fur.DatabaseAccessor
             sql = DbHelpers.ResolveSqlConfiguration(sql);
 
             // 初始化数据库连接对象、数据库命令对象和数据库适配器对象
-            var (dbConnection, dbCommand, dbDataAdapter, dbParameters) = databaseFacade.PrepareDbDbDataAdapter(sql, model, commandType);
+            var (_, dbCommand, dbDataAdapter, dbParameters) = databaseFacade.PrepareDbDbDataAdapter(sql, model, commandType);
 
             // 填充DataSet
             using var dataSet = new DataSet();
             dbDataAdapter.Fill(dataSet);
-
-            // 关闭连接
-            dbConnection.Close();
 
             // 清空命令参数
             dbCommand.Parameters.Clear();
@@ -452,14 +407,11 @@ namespace Fur.DatabaseAccessor
             sql = DbHelpers.ResolveSqlConfiguration(sql);
 
             // 初始化数据库连接对象、数据库命令对象和数据库适配器对象
-            var (dbConnection, dbCommand, dbDataAdapter) = await databaseFacade.PrepareDbDbDataAdapterAsync(sql, parameters, commandType, cancellationToken);
+            var (_, dbCommand, dbDataAdapter) = await databaseFacade.PrepareDbDbDataAdapterAsync(sql, parameters, commandType, cancellationToken);
 
             // 填充DataSet
             using var dataSet = new DataSet();
             dbDataAdapter.Fill(dataSet);
-
-            // 关闭连接
-            await dbConnection.CloseAsync();
 
             // 清空命令参数
             dbCommand.Parameters.Clear();
@@ -482,14 +434,11 @@ namespace Fur.DatabaseAccessor
             sql = DbHelpers.ResolveSqlConfiguration(sql);
 
             // 初始化数据库连接对象、数据库命令对象和数据库适配器对象
-            var (dbConnection, dbCommand, dbDataAdapter, dbParameters) = await databaseFacade.PrepareDbDbDataAdapterAsync(sql, model, commandType, cancellationToken);
+            var (_, dbCommand, dbDataAdapter, dbParameters) = await databaseFacade.PrepareDbDbDataAdapterAsync(sql, model, commandType, cancellationToken);
 
             // 填充DataSet
             using var dataSet = new DataSet();
             dbDataAdapter.Fill(dataSet);
-
-            // 关闭连接
-            await dbConnection.CloseAsync();
 
             // 清空命令参数
             dbCommand.Parameters.Clear();

@@ -54,7 +54,7 @@ namespace Fur.CorsAccessor
         public void PostConfigure(CorsAccessorSettingsOptions options, IConfiguration configuration)
         {
             PolicyName ??= "FurCorsAccessor";
-            WithOrigins ??= new[] { "http://localhost:4200" };
+            WithOrigins ??= Array.Empty<string>();
             AllowCredentials ??= true;
         }
     }

@@ -1,6 +1,6 @@
 ﻿using Fur.DependencyInjection;
 
-namespace Fur.DataValidation
+namespace System.ComponentModel.DataAnnotations
 {
     /// <summary>
     /// 验证逻辑
@@ -11,11 +11,13 @@ namespace Fur.DataValidation
         /// <summary>
         /// 全部都要验证通过
         /// </summary>
+        [Description("全部验证通过才为真")]
         AllOfThem,
 
         /// <summary>
         /// 至少一个验证通过
         /// </summary>
+        [Description("有一个通过就为真")]
         AtLeastOne
     }
 }

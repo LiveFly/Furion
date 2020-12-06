@@ -1,4 +1,5 @@
-﻿using Fur.DatabaseAccessor;
+﻿using Fur;
+using Fur.DatabaseAccessor;
 using Fur.DependencyInjection;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -55,6 +56,9 @@ namespace Microsoft.Extensions.DependencyInjection
             // 注册非泛型仓储
             services.TryAddScoped<IRepository, EFCoreRepository>();
 
+            // 注册多数据库仓储
+            services.TryAddScoped(typeof(IDbRepository<>), typeof(DbRepository<>));
+
             // 解析数据库上下文
             services.AddTransient(provider =>
             {
@@ -65,7 +69,13 @@ namespace Microsoft.Extensions.DependencyInjection
                     if (!isRegistered) throw new InvalidOperationException("The DbContext for locator binding was not found");
 
                     // 动态解析数据库上下文
-                    return provider.GetService(dbContextType) as DbContext;
+                    var dbContext = provider.GetService(dbContextType) as DbContext;
+                    var dbContextPool = App.GetService<IDbContextPool>();
+
+                    // 添加数据库上下文到池中
+                    dbContextPool?.AddToPool(dbContext);
+
+                    return dbContext;
                 }
                 return (Func<Type, ITransient, DbContext>)dbContextResolve;
             });
@@ -79,7 +89,13 @@ namespace Microsoft.Extensions.DependencyInjection
                     if (!isRegistered) throw new InvalidOperationException("The DbContext for locator binding was not found");
 
                     // 动态解析数据库上下文
-                    return provider.GetService(dbContextType) as DbContext;
+                    var dbContext = provider.GetService(dbContextType) as DbContext;
+                    var dbContextPool = App.GetService<IDbContextPool>();
+
+                    // 添加数据库上下文到池中
+                    dbContextPool?.AddToPool(dbContext);
+
+                    return dbContext;
                 }
                 return (Func<Type, IScoped, DbContext>)dbContextResolve;
             });

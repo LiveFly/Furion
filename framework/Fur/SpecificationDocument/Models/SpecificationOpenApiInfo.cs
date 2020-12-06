@@ -15,6 +15,7 @@ namespace Fur.SpecificationDocument
         /// </summary>
         public SpecificationOpenApiInfo()
         {
+            Version = "1.0.0";
         }
 
         /// <summary>
@@ -39,5 +40,10 @@ namespace Fur.SpecificationDocument
         /// 排序
         /// </summary>
         public int? Order { get; set; }
+
+        /// <summary>
+        /// 是否显示
+        /// </summary>
+        public bool? Show { get; set; }
     }
 }

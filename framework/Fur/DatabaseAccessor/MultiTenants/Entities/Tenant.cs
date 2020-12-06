@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 
@@ -14,7 +14,7 @@ namespace Fur.DatabaseAccessor
         /// </summary>
         public Tenant()
         {
-            CreatedTime = DateTime.Now;
+            CreatedTime = DateTimeOffset.UtcNow;
         }
 
         /// <summary>
@@ -23,44 +23,47 @@ namespace Fur.DatabaseAccessor
         [Key]
         [ScaffoldColumn(false)]
         [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
-        public Guid TenantId { get; set; }
+        public virtual Guid TenantId { get; set; }
 
         /// <summary>
         /// 租户名
         /// </summary>
-        [Required]
-        public string Name { get; set; }
+        [Required, MaxLength(128)]
+        public virtual string Name { get; set; }
 
         /// <summary>
         /// 来源主机地址
         /// </summary>
-        public string Host { get; set; }
+        [MaxLength(256)]
+        public virtual string Host { get; set; }
 
         /// <summary>
         /// 电子邮箱
         /// </summary>
-        [EmailAddress]
-        public string EmailAddress { get; set; }
+        [EmailAddress, MaxLength(256)]
+        public virtual string EmailAddress { get; set; }
 
         /// <summary>
         /// 手机号码
         /// </summary>
-        [Phone]
-        public string PhoneNumber { get; set; }
+        [Phone, MaxLength(32)]
+        public virtual string PhoneNumber { get; set; }
 
         /// <summary>
         /// 架构名
         /// </summary>
-        public string Schema { get; set; }
+        [Phone, MaxLength(32)]
+        public virtual string Schema { get; set; }
 
         /// <summary>
         /// 数据库链接字符串
         /// </summary>
-        public string ConnectionString { get; set; }
+        [MaxLength(256)]
+        public virtual string ConnectionString { get; set; }
 
         /// <summary>
         /// 创建时间
         /// </summary>
-        public DateTime CreatedTime { get; set; }
+        public virtual DateTimeOffset CreatedTime { get; set; }
     }
 }

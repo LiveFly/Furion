@@ -14,11 +14,11 @@ sidebar_label: 15. CORS 跨域
 
 | 当前页面 url                  | 被请求页面 url                      | 是否跨域 | 原因                           |
 | ----------------------------- | ----------------------------------- | -------- | ------------------------------ |
-| http://www.chinadot.net/      | http://www.chinadot.net/index.html  | 否       | 同源（协议、域名、端口号相同） |
-| http://www.chinadot.net/      | https://www.chinadot.net/index.html | 跨域     | 协议不同（http/https）         |
-| http://www.chinadot.net/      | http://www.baidu.com/               | 跨域     | 主域名不同（chinadot/baidu）   |
-| http://www.chinadot.net/      | http://blog.chinadot.net/           | 跨域     | 子域名不同（www/blog）         |
-| http://www.chinadot.net:8080/ | http://www.chinadot.net:7001/       | 跨域     | 端口号不同（8080/7001）        |
+| http://www.furos.cn/      | http://www.furos.cn/index.html  | 否       | 同源（协议、域名、端口号相同） |
+| http://www.furos.cn/      | https://www.furos.cn/index.html | 跨域     | 协议不同（http/https）         |
+| http://www.furos.cn/      | http://www.baidu.com/               | 跨域     | 主域名不同（chinadot/baidu）   |
+| http://www.furos.cn/      | http://blog.furos.cn/           | 跨域     | 子域名不同（www/blog）         |
+| http://www.furos.cn:8080/ | http://www.furos.cn:7001/       | 跨域     | 端口号不同（8080/7001）        |
 
 ## 15.3 什么是 CORS
 
@@ -75,13 +75,19 @@ namespace Fur.Web.Core
 
 ### 15.4.2 配置允许跨域域名
 
-注册 `CorsAccessor` 服务之后需要配置运行跨域的域名或请求方式，如：
+:::important 小提醒
+
+默认情况下，`Fur` 允许所有域名来源访问，也就是无需配置任何来源域名，另外前端也需要设置请求参数：`withCredentials:false`
+
+:::
+
+如果需要指定特定域名，则添加以下配置即可：
 
 ```json {4}
 {
   "CorsAccessorSettings": {
     "PolicyName": "自定义跨域策略名",
-    "WithOrigins": ["http://localhost:4200", "https://chinadot.net"]
+    "WithOrigins": ["http://localhost:4200", "https://furos.cn"]
   }
 }
 ```

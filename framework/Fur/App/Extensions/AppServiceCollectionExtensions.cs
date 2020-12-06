@@ -1,5 +1,6 @@
 ﻿using Fur;
 using Fur.DependencyInjection;
+using Fur.UnifyResult;
 using System;
 using System.Linq;
 using System.Reflection;
@@ -18,21 +19,121 @@ namespace Microsoft.Extensions.DependencyInjection
         private const string MiniProfilerRouteBasePath = "/index-mini-profiler";
 
         /// <summary>
-        /// 注入基础配置
+        /// Mvc 注入基础配置（带Swagger）
         /// </summary>
-        /// <param name="mvcBuilder">Mvc构建起</param>
+        /// <param name="mvcBuilder">Mvc构建器</param>
         /// <returns>IMvcBuilder</returns>
         public static IMvcBuilder AddInject(this IMvcBuilder mvcBuilder)
         {
-            var services = mvcBuilder.Services;
-
-            services.AddSpecificationDocuments();
-
-            mvcBuilder.AddDynamicApiControllers()
-                              .AddDataValidation()
-                              .AddFriendlyException();
+            mvcBuilder.AddSpecificationDocuments()
+                      .AddDynamicApiControllers()
+                      .AddDataValidation()
+                      .AddFriendlyException();
 
             return mvcBuilder;
+        }
+
+        /// <summary>
+        /// 服务注入基础配置（带Swagger）
+        /// </summary>
+        /// <param name="services">服务集合</param>
+        /// <returns>IMvcBuilder</returns>
+        public static IServiceCollection AddInject(this IServiceCollection services)
+        {
+            services.AddSpecificationDocuments()
+                    .AddDynamicApiControllers()
+                    .AddDataValidation()
+                    .AddFriendlyException();
+
+            return services;
+        }
+
+        /// <summary>
+        /// Mvc 注入基础配置
+        /// </summary>
+        /// <param name="mvcBuilder">Mvc构建器</param>
+        /// <param name="includeDynamicApiController"></param>
+        /// <returns>IMvcBuilder</returns>
+        public static IMvcBuilder AddInjectBase(this IMvcBuilder mvcBuilder, bool includeDynamicApiController = true)
+        {
+            if (includeDynamicApiController) mvcBuilder.AddDynamicApiControllers();
+
+            mvcBuilder.AddDataValidation()
+                      .AddFriendlyException();
+
+            return mvcBuilder;
+        }
+
+        /// <summary>
+        /// Mvc 注入基础配置
+        /// </summary>
+        /// <param name="services">服务集合</param>
+        /// <param name="includeDynamicApiController"></param>
+        /// <returns>IMvcBuilder</returns>
+        public static IServiceCollection AddInjectBase(this IServiceCollection services, bool includeDynamicApiController = true)
+        {
+            if (includeDynamicApiController) services.AddDynamicApiControllers();
+
+            services.AddDataValidation()
+                    .AddFriendlyException();
+
+            return services;
+        }
+
+        /// <summary>
+        /// Mvc 注入基础配置和规范化结果
+        /// </summary>
+        /// <param name="mvcBuilder"></param>
+        /// <returns></returns>
+        public static IMvcBuilder AddInjectWithUnifyResult(this IMvcBuilder mvcBuilder)
+        {
+            mvcBuilder.AddInject()
+                      .AddUnifyResult();
+
+            return mvcBuilder;
+        }
+
+        /// <summary>
+        /// 注入基础配置和规范化结果
+        /// </summary>
+        /// <param name="services"></param>
+        /// <returns></returns>
+        public static IServiceCollection AddInjectWithUnifyResult(this IServiceCollection services)
+        {
+            services.AddInject()
+                    .AddUnifyResult();
+
+            return services;
+        }
+
+        /// <summary>
+        /// Mvc 注入基础配置和规范化结果
+        /// </summary>
+        /// <typeparam name="TUnifyResultProvider"></typeparam>
+        /// <param name="mvcBuilder"></param>
+        /// <returns></returns>
+        public static IMvcBuilder AddInjectWithUnifyResult<TUnifyResultProvider>(this IMvcBuilder mvcBuilder)
+            where TUnifyResultProvider : class, IUnifyResultProvider
+        {
+            mvcBuilder.AddInject()
+                      .AddUnifyResult<TUnifyResultProvider>();
+
+            return mvcBuilder;
+        }
+
+        /// <summary>
+        /// Mvc 注入基础配置和规范化结果
+        /// </summary>
+        /// <typeparam name="TUnifyResultProvider"></typeparam>
+        /// <param name="services"></param>
+        /// <returns></returns>
+        public static IServiceCollection AddInjectWithUnifyResult<TUnifyResultProvider>(this IServiceCollection services)
+            where TUnifyResultProvider : class, IUnifyResultProvider
+        {
+            services.AddInject()
+                    .AddUnifyResult<TUnifyResultProvider>();
+
+            return services;
         }
 
         /// <summary>
@@ -46,7 +147,7 @@ namespace Microsoft.Extensions.DependencyInjection
             // 注册全局配置选项
             services.AddConfigurableOptions<AppSettingsOptions>();
 
-            // 注册 IHttpContextAccessor
+            // 添加 HttContext 访问器
             services.AddHttpContextAccessor();
 
             // 注册分布式内存缓存
@@ -67,11 +168,11 @@ namespace Microsoft.Extensions.DependencyInjection
                 }).AddEntityFramework();
             }
 
-            // 自定义服务
-            configure?.Invoke(services);
-
             // 注册全局依赖注入
             services.AddDependencyInjection();
+
+            // 自定义服务
+            configure?.Invoke(services);
 
             return services;
         }
@@ -92,7 +193,7 @@ namespace Microsoft.Extensions.DependencyInjection
             foreach (var type in startups)
             {
                 var startup = Activator.CreateInstance(type) as AppStartup;
-                App.Startups.Add(startup);
+                App.AppStartups.Add(startup);
 
                 // 获取所有符合依赖注入格式的方法，如返回值void，且第一个参数是 IServiceCollection 类型
                 var serviceMethods = type.GetMethods(BindingFlags.Public | BindingFlags.Instance)

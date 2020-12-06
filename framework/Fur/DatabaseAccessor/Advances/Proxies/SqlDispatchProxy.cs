@@ -1,4 +1,5 @@
 ﻿using Fur.DependencyInjection;
+using Fur.Extensions;
 using Mapster;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
@@ -84,7 +85,7 @@ namespace Fur.DatabaseAccessor
                     : database.DataAdapterFillAsync(sql, parameterModel, commandType).GetAwaiter().GetResult();
 
                 var result = ConvertValueTuple(returnType, dataSet);
-                return !isAsync ? result : Task.FromResult(result);
+                return !isAsync ? result : result.ToTaskResult(returnType);
             }
             // 处理 基元类型 返回值
             else if (returnType.IsRichPrimitive())
@@ -93,7 +94,7 @@ namespace Fur.DatabaseAccessor
                     ? database.ExecuteScalar(sql, parameterModel, commandType)
                     : database.ExecuteScalarAsync(sql, parameterModel, commandType).GetAwaiter().GetResult();
 
-                return !isAsync ? result : Task.FromResult(result);
+                return !isAsync ? result : result.ToTaskResult(returnType);
             }
             // 处理 存储过程带输出类型 返回值
             else if (returnType == typeof(ProcedureOutputResult) || (returnType.IsGenericType && typeof(ProcedureOutputResult<>).IsAssignableFrom(returnType.GetGenericTypeDefinition())))
@@ -103,7 +104,7 @@ namespace Fur.DatabaseAccessor
                     : database.DataAdapterFillAsync(sql, parameterModel, commandType).GetAwaiter().GetResult();
 
                 var result = ConvertProcedureOutputResult(returnType, dbParameters, dataSet);
-                return !isAsync ? result : Task.FromResult(result);
+                return !isAsync ? result : result.ToTaskResult(returnType);
             }
             else
             {
@@ -116,8 +117,8 @@ namespace Fur.DatabaseAccessor
                 else
                 {
                     var list = dataTable.ToList(returnType);
-                    var result = list.Adapt(list.GetType(), returnType);
-                    return !isAsync ? result : Task.FromResult(result);
+                    var result = list?.Adapt(list.GetType(), returnType);
+                    return !isAsync ? result : result.ToTaskResult(returnType);
                 }
             }
         }
@@ -131,7 +132,7 @@ namespace Fur.DatabaseAccessor
         private static object ConvertValueTuple(Type returnType, DataSet dataSet)
         {
             var tupleList = dataSet.ToList(returnType);
-            var result = tupleList.Adapt(tupleList.GetType(), returnType);
+            var result = tupleList?.Adapt(tupleList.GetType(), returnType);
             return result;
         }
 
@@ -152,7 +153,7 @@ namespace Fur.DatabaseAccessor
             else
             {
                 var result = DbHelpers.WrapperProcedureOutput(parameters, dataSet, returnType.GenericTypeArguments.First());
-                return result.Adapt(result.GetType(), returnType);
+                return result?.Adapt(result.GetType(), returnType);
             }
         }
 
@@ -170,12 +171,8 @@ namespace Fur.DatabaseAccessor
             // 获取 Sql 代理特性
             var sqlProxyAttribute = method.GetCustomAttribute<SqlProxyAttribute>(true);
 
-            // 判断是否是异步方法
-            var isAsyncMethod = method.IsAsync();
-
-            // 获取类型返回值并处理 Task 和 Task<T> 类型返回值
-            var returnType = method.ReturnType;
-            returnType = isAsyncMethod ? (returnType.GenericTypeArguments.FirstOrDefault() ?? typeof(void)) : returnType;
+            // 获取方法真实返回值类型
+            var returnType = method.GetMethodRealReturnType();
 
             // 获取数据库上下文
             var dbContext = GetDbContext(sqlProxyAttribute.DbContextLocator);
@@ -215,7 +212,7 @@ namespace Fur.DatabaseAccessor
                 ParameterModel = parameters,
                 DbContext = dbContext,
                 ReturnType = returnType,
-                IsAsync = isAsyncMethod,
+                IsAsync = method.IsAsync(),
                 CommandType = commandType,
                 FinalSql = finalSql
             };
@@ -228,15 +225,11 @@ namespace Fur.DatabaseAccessor
         /// <returns>数据库上下文</returns>
         private DbContext GetDbContext(Type dbContextLocator = null)
         {
-            // 解析数据库上下文池和数据库上下文解析器
-            var dbContextPool = Services.GetService<IDbContextPool>();
+            // 解析数据库上下文解析器
             var dbContextResolver = Services.GetService<Func<Type, IScoped, DbContext>>();
 
             // 解析数据库上下文
             var dbContext = dbContextResolver(dbContextLocator ?? typeof(MasterDbContextLocator), default);
-
-            // 添加数据库上下文到池中
-            dbContextPool.AddToPool(dbContext);
 
             return dbContext;
         }

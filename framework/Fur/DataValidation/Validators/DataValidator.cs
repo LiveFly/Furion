@@ -1,4 +1,6 @@
 ﻿using Fur.DependencyInjection;
+using Fur.Extensions;
+using Microsoft.AspNetCore.Mvc;
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
@@ -60,7 +62,8 @@ namespace Fur.DataValidation
             if (obj.GetType().IsDefined(typeof(NonValidationAttribute), true))
                 return new DataValidationResult
                 {
-                    IsValid = true
+                    IsValid = true,
+                    MemberOrValue = obj
                 };
 
             // 存储验证结果
@@ -71,7 +74,8 @@ namespace Fur.DataValidation
             return new DataValidationResult
             {
                 IsValid = isValid,
-                ValidationResults = results
+                ValidationResults = results,
+                MemberOrValue = obj
             };
         }
 
@@ -91,7 +95,8 @@ namespace Fur.DataValidation
             return new DataValidationResult
             {
                 IsValid = isValid,
-                ValidationResults = results
+                ValidationResults = results,
+                MemberOrValue = value
             };
         }
 
@@ -141,7 +146,8 @@ namespace Fur.DataValidation
                 return new DataValidationResult
                 {
                     IsValid = false,
-                    ValidationResults = results
+                    ValidationResults = results,
+                    MemberOrValue = value
                 };
             }
 
@@ -179,12 +185,13 @@ namespace Fur.DataValidation
             return new DataValidationResult
             {
                 IsValid = isValid ?? true,
-                ValidationResults = results
+                ValidationResults = results,
+                MemberOrValue = value
             };
         }
 
         /// <summary>
-        /// <see cref="GetValidationValidationItemMetadata"/> 缓存集合
+        /// 获取验证类型验证Item集合
         /// </summary>
         private static readonly ConcurrentDictionary<object, (string, ValidationItemMetadataAttribute)> GetValidationTypeValidationItemMetadataCached;
 
@@ -261,7 +268,7 @@ namespace Fur.DataValidation
                 .ToDictionary(u => u.Name, u => u.GetCustomAttribute<ValidationMessageAttribute>().ErrorMessage);
 
             // 加载配置文件配置
-            var validationTypeMessageSettings = App.GetOptions<ValidationTypeMessageSettingsOptions>();
+            var validationTypeMessageSettings = App.GetDuplicateOptions<ValidationTypeMessageSettingsOptions>();
             if (validationTypeMessageSettings is { Definitions: not null })
             {
                 // 获取所有参数大于1的配置

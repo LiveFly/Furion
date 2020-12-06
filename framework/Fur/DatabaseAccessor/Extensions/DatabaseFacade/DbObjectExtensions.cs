@@ -38,7 +38,7 @@ namespace Fur.DatabaseAccessor
         /// </summary>
         static DbObjectExtensions()
         {
-            IsDevelopment = App.HostEnvironment.IsDevelopment();
+            IsDevelopment = App.WebHostEnvironment.IsDevelopment();
             InjectMiniProfiler = App.Settings.InjectMiniProfiler.Value;
         }
 
@@ -230,9 +230,10 @@ namespace Fur.DatabaseAccessor
             var dbConnection = InjectMiniProfiler ? new ProfiledDbConnection(databaseFacade.GetDbConnection(), MiniProfiler.Current) : databaseFacade.GetDbConnection();
 
             // 创建数据库命令对象
-            var dbCommand = InjectMiniProfiler ? new ProfiledDbCommand(dbConnection.CreateCommand(), null, MiniProfiler.Current) : dbConnection.CreateCommand();
+            var dbCommand = dbConnection.CreateCommand();
 
             // 设置基本参数
+            dbCommand.Transaction = databaseFacade.CurrentTransaction?.GetDbTransaction();
             dbCommand.CommandType = commandType;
             dbCommand.CommandText = sql;
 
@@ -281,10 +282,13 @@ namespace Fur.DatabaseAccessor
         private static void OpenConnection(DatabaseFacade databaseFacade, DbConnection dbConnection)
         {
             // 判断连接字符串是否关闭，如果是，则开启
-            if (dbConnection.State.HasFlag(ConnectionState.Closed)) dbConnection.Open();
+            if (dbConnection.State == ConnectionState.Closed)
+            {
+                dbConnection.Open();
 
-            // 打印数据库连接信息到 MiniProfiler
-            PrintConnectionToMiniProfiler(databaseFacade, dbConnection);
+                // 打印数据库连接信息到 MiniProfiler
+                PrintConnectionToMiniProfiler(databaseFacade, dbConnection);
+            }
         }
 
         /// <summary>
@@ -297,10 +301,13 @@ namespace Fur.DatabaseAccessor
         private static async Task OpenConnectionAsync(DatabaseFacade databaseFacade, DbConnection dbConnection, CancellationToken cancellationToken = default)
         {
             // 判断连接字符串是否关闭，如果是，则开启
-            if (dbConnection.State.HasFlag(ConnectionState.Closed)) await dbConnection.OpenAsync(cancellationToken);
+            if (dbConnection.State == ConnectionState.Closed)
+            {
+                await dbConnection.OpenAsync(cancellationToken);
 
-            // 打印数据库连接信息到 MiniProfiler
-            PrintConnectionToMiniProfiler(databaseFacade, dbConnection);
+                // 打印数据库连接信息到 MiniProfiler
+                PrintConnectionToMiniProfiler(databaseFacade, dbConnection);
+            }
         }
 
         /// <summary>
