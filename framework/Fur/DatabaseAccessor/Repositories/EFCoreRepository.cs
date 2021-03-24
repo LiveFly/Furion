@@ -86,6 +86,30 @@ namespace Fur.DatabaseAccessor
         }
 
         /// <summary>
+        /// 重新构建并切换仓储
+        /// </summary>
+        /// <typeparam name="TEntity">实体类型</typeparam>
+        /// <returns>仓储</returns>
+        public virtual IRepository<TEntity> BuildChange<TEntity>()
+            where TEntity : class, IPrivateEntity, new()
+        {
+            return _serviceProvider.CreateScope().ServiceProvider.GetService<IRepository<TEntity>>();
+        }
+
+        /// <summary>
+        /// 重新构建并切换多数据库上下文仓储
+        /// </summary>
+        /// <typeparam name="TEntity">实体类型</typeparam>
+        /// <typeparam name="TDbContextLocator">数据库上下文定位器</typeparam>
+        /// <returns>仓储</returns>
+        public virtual IRepository<TEntity, TDbContextLocator> BuildChange<TEntity, TDbContextLocator>()
+            where TEntity : class, IPrivateEntity, new()
+            where TDbContextLocator : class, IDbContextLocator
+        {
+            return _serviceProvider.CreateScope().ServiceProvider.GetService<IRepository<TEntity, TDbContextLocator>>();
+        }
+
+        /// <summary>
         /// 获取 Sql 操作仓储
         /// </summary>
         /// <returns>ISqlRepository</returns>
@@ -156,27 +180,24 @@ namespace Fur.DatabaseAccessor
             , IServiceProvider serviceProvider
             , IDbContextPool dbContextPool) : base(dbContextResolve, serviceProvider)
         {
-            // 解析数据库上下文
-            var dbContext = dbContextResolve(typeof(TDbContextLocator), default);
-            _dbContextPool = dbContextPool;
-
-            // 配置数据库上下文
-            DynamicDbContext = DbContext = dbContext;
-
             // 初始化数据库相关数据
             DbConnection = Database.GetDbConnection();
-            ChangeTracker = dbContext.ChangeTracker;
-            Model = dbContext.Model;
+            ChangeTracker = DbContext.ChangeTracker;
+            Model = DbContext.Model;
 
             // 内置多租户
             Tenant = DynamicDbContext.Tenant;
 
+            // 设置提供器名称
             ProviderName = Database.ProviderName;
 
             //初始化实体
-            Entities = dbContext.Set<TEntity>();
+            Entities = DbContext.Set<TEntity>();
             DetachedEntities = Entities.AsNoTracking();
             EntityType = Model.FindEntityType(typeof(TEntity));
+
+            // 初始化数据上下文池
+            _dbContextPool = dbContextPool;
 
             // 初始化服务提供器
             ServiceProvider = serviceProvider;
@@ -184,16 +205,6 @@ namespace Fur.DatabaseAccessor
             // 非泛型仓储
             _repository = repository;
         }
-
-        /// <summary>
-        /// 数据库上下文
-        /// </summary>
-        public virtual DbContext DbContext { get; }
-
-        /// <summary>
-        /// 动态数据库上下文
-        /// </summary>
-        public virtual dynamic DynamicDbContext { get; }
 
         /// <summary>
         /// 实体集合
@@ -527,7 +538,7 @@ namespace Fur.DatabaseAccessor
         /// 动态改变表名
         /// </summary>
         /// <param name="tableName">表名</param>
-        [Obsolete("该方法已过时，调用将抛出空异常")]
+        [Obsolete("该方法已过时，请调用 BuildChange<TEntity> 方法代替。")]
         public virtual void ChangeTable(string tableName)
         {
             if (EntityType is IConventionEntityType convention)
@@ -560,7 +571,6 @@ namespace Fur.DatabaseAccessor
             else
             {
                 DbConnection.ConnectionString = connectionString;
-                await Task.CompletedTask;
             }
         }
 
@@ -679,20 +689,27 @@ namespace Fur.DatabaseAccessor
         }
 
         /// <summary>
-        /// 将仓储约束为特定仓储
+        /// 重新构建并切换仓储
         /// </summary>
-        /// <typeparam name="TRestrainRepository">特定仓储</typeparam>
-        /// <returns>TRestrainRepository</returns>
-        public virtual TRestrainRepository Constraint<TRestrainRepository>()
-            where TRestrainRepository : class, IPrivateRepository
+        /// <typeparam name="TChangeEntity">实体类型</typeparam>
+        /// <returns>仓储</returns>
+        public virtual IRepository<TChangeEntity> BuildChange<TChangeEntity>()
+            where TChangeEntity : class, IPrivateEntity, new()
         {
-            var type = typeof(TRestrainRepository);
-            if (!type.IsInterface || typeof(IPrivateRepository) == type || type.Name.Equals(nameof(IRepository)) || (type.IsGenericType && type.GetGenericTypeDefinition().Name.Equals(nameof(IRepository))))
-            {
-                throw new InvalidCastException("Invalid type conversion");
-            }
+            return _repository.BuildChange<TChangeEntity>();
+        }
 
-            return this as TRestrainRepository;
+        /// <summary>
+        /// 重新构建并切换多数据库上下文仓储
+        /// </summary>
+        /// <typeparam name="TChangeEntity">实体类型</typeparam>
+        /// <typeparam name="TChangeDbContextLocator">数据库上下文定位器</typeparam>
+        /// <returns>仓储</returns>
+        public virtual IRepository<TChangeEntity, TChangeDbContextLocator> BuildChange<TChangeEntity, TChangeDbContextLocator>()
+            where TChangeEntity : class, IPrivateEntity, new()
+            where TChangeDbContextLocator : class, IDbContextLocator
+        {
+            return _repository.BuildChange<TChangeEntity, TChangeDbContextLocator>();
         }
     }
 }

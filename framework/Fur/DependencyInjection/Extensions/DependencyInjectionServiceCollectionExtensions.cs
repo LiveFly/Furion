@@ -1,6 +1,5 @@
 ﻿using Fur;
 using Fur.DependencyInjection;
-using Mapster;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using System;
 using System.Collections.Concurrent;
@@ -91,6 +90,8 @@ namespace Microsoft.Extensions.DependencyInjection
                 .Where(u => typeof(IPrivateDependency).IsAssignableFrom(u) && u.IsClass && !u.IsInterface && !u.IsAbstract)
                 .OrderBy(u => GetOrder(u));
 
+            var projectAssemblies = App.Assemblies;
+
             // 执行依赖注入
             foreach (var type in injectTypes)
             {
@@ -98,7 +99,14 @@ namespace Microsoft.Extensions.DependencyInjection
                 var injectionAttribute = !type.IsDefined(typeof(InjectionAttribute)) ? new InjectionAttribute() : type.GetCustomAttribute<InjectionAttribute>();
 
                 // 获取所有能注册的接口
-                var canInjectInterfaces = type.GetInterfaces().Where(u => !typeof(IPrivateDependency).IsAssignableFrom(u));
+                var canInjectInterfaces = type.GetInterfaces()
+                    .Where(u => !injectionAttribute.ExpectInterfaces.Contains(u)
+                                && !typeof(IPrivateDependency).IsAssignableFrom(u)
+                                && projectAssemblies.Contains(u.Assembly)
+                                && (
+                                    (!type.IsGenericType && !u.IsGenericType)
+                                    || (type.IsGenericType && u.IsGenericType && type.GenericTypeArguments.Length == u.GenericTypeArguments.Length))
+                                );
 
                 // 注册暂时服务
                 if (typeof(ITransient).IsAssignableFrom(type))
@@ -430,7 +438,14 @@ namespace Microsoft.Extensions.DependencyInjection
                 var extServices = externalServices.Definitions.OrderBy(u => u.Order);
                 foreach (var externalService in extServices)
                 {
-                    var injectionAttribute = externalService.Adapt<InjectionAttribute>();
+                    var injectionAttribute = new InjectionAttribute
+                    {
+                        Action = externalService.Action,
+                        Named = externalService.Named,
+                        Order = externalService.Order,
+                        Pattern = externalService.Pattern
+                    };
+
                     // 加载代理拦截
                     if (!string.IsNullOrEmpty(externalService.Proxy)) injectionAttribute.Proxy = LoadStringType(externalService.Proxy);
 

@@ -1,4 +1,4 @@
-﻿using System.ComponentModel;
+using System.ComponentModel;
 using System.Text.RegularExpressions;
 
 namespace Fur.DataValidation
@@ -15,7 +15,7 @@ namespace Fur.DataValidation
         /// 表达式：^[\w\W]+$
         /// </para>
         /// </summary>
-        [Description("非空非Null"), ValidationItemMetadata(@" ^[\w\W]+$", "The Value is required")]
+        [Description("非空非Null"), ValidationItemMetadata(@"^[\w\W]+$", "The Value is required")]
         Required,
 
         /// <summary>
@@ -30,28 +30,28 @@ namespace Fur.DataValidation
         /// <summary>
         /// 正数
         /// <para>
-        /// 表达式：^[+]?\d+(\.\d+)?$
+        /// 表达式：^(0\.0*[1-9]+[0-9]*$|[1-9]+[0-9]*\.[0-9]*[0-9]$|[1-9]+[0-9]*$)
         /// </para>
         /// </summary>
-        [Description("正数"), ValidationItemMetadata(@"^[+]?\d+(\.\d+)?$", "The Value is not a positive number type")]
+        [Description("正数"), ValidationItemMetadata(@"^(0\.0*[1-9]+[0-9]*$|[1-9]+[0-9]*\.[0-9]*[0-9]$|[1-9]+[0-9]*$)", "The Value is not a positive number type")]
         PositiveNumber,
 
         /// <summary>
         /// 负数
         /// <para>
-        /// 表达式：^-[1-9]\d*\.\d*|-0\.\d*[1-9]\d*$
+        /// 表达式：^-(0\.0*[1-9]+[0-9]*$|[1-9]+[0-9]*\.[0-9]*[0-9]$|[1-9]+[0-9]*$)
         /// </para>
         /// </summary>
-        [Description("负数"), ValidationItemMetadata(@"^-[1-9]\d*\.\d*|-0\.\d*[1-9]\d*$", "The Value is not a negative number type")]
+        [Description("负数"), ValidationItemMetadata(@"^-(0\.0*[1-9]+[0-9]*$|[1-9]+[0-9]*\.[0-9]*[0-9]$|[1-9]+[0-9]*$)", "The Value is not a negative number type")]
         NegativeNumber,
 
         /// <summary>
         /// 整数
         /// <para>
-        /// 表达式：^-?\d+$
+        /// 表达式：^-?[1-9]+[0-9]*$|^0$
         /// </para>
         /// </summary>
-        [Description("整数"), ValidationItemMetadata(@"^-?\d+$", "The Value is not a integer type")]
+        [Description("整数"), ValidationItemMetadata(@"^-?[1-9]+[0-9]*$|^0$", "The Value is not a integer type")]
         Integer,
 
         /// <summary>

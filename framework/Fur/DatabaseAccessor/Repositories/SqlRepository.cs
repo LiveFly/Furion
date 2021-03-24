@@ -47,6 +47,7 @@ namespace Fur.DatabaseAccessor
         {
             // 解析数据库上下文
             var dbContext = dbContextResolve(typeof(TDbContextLocator), default);
+            DynamicDbContext = DbContext = dbContext;
 
             // 初始化数据库相关数据
             Database = dbContext.Database;
@@ -58,6 +59,16 @@ namespace Fur.DatabaseAccessor
         /// 数据库操作对象
         /// </summary>
         public virtual DatabaseFacade Database { get; }
+
+        /// <summary>
+        /// 数据库上下文
+        /// </summary>
+        public virtual DbContext DbContext { get; }
+
+        /// <summary>
+        /// 动态数据库上下文
+        /// </summary>
+        public virtual dynamic DynamicDbContext { get; }
 
         /// <summary>
         /// 切换仓储
@@ -90,6 +101,23 @@ namespace Fur.DatabaseAccessor
             where TService : class
         {
             return _serviceProvider.GetRequiredService<TService>();
+        }
+
+        /// <summary>
+        /// 将仓储约束为特定仓储
+        /// </summary>
+        /// <typeparam name="TRestrainRepository">特定仓储</typeparam>
+        /// <returns>TRestrainRepository</returns>
+        public virtual TRestrainRepository Constraint<TRestrainRepository>()
+            where TRestrainRepository : class, IPrivateRepository
+        {
+            var type = typeof(TRestrainRepository);
+            if (!type.IsInterface || typeof(IPrivateRepository) == type || type.Name.Equals(nameof(IRepository)) || (type.IsGenericType && type.GetGenericTypeDefinition().Name.Equals(nameof(IRepository))))
+            {
+                throw new InvalidCastException("Invalid type conversion");
+            }
+
+            return this as TRestrainRepository;
         }
     }
 }

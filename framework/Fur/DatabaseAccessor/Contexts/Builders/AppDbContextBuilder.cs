@@ -1,9 +1,10 @@
 ﻿using Fur.DependencyInjection;
 using Fur.Extensions;
-using Mapster;
+using Fur.Utilities;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 using System;
+using System.Collections;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations.Schema;
@@ -34,10 +35,18 @@ namespace Fur.DatabaseAccessor
         private static readonly MethodInfo ModelBuildEntityMethod;
 
         /// <summary>
+        /// 判断是否是 Web 环境
+        /// </summary>
+        private static readonly bool IsWebEnvironment;
+
+        /// <summary>
         /// 构造函数
         /// </summary>
         static AppDbContextBuilder()
         {
+            // 判断是否是 Web 环境
+            IsWebEnvironment = HttpContextUtility.GetCurrentHttpContext() != null;
+
             // 扫描程序集，获取数据库实体相关类型
             EntityCorrelationTypes = App.CanBeScanTypes.Where(t => (typeof(IPrivateEntity).IsAssignableFrom(t) || typeof(IPrivateModelBuilder).IsAssignableFrom(t))
                 && t.IsClass && !t.IsAbstract && !t.IsGenericType && !t.IsInterface && !t.IsDefined(typeof(NonAutomaticAttribute), true))
@@ -73,13 +82,13 @@ namespace Fur.DatabaseAccessor
 
             // 获取当前数据库上下文的 [DbContextAttributes] 特性
             var dbContextType = dbContext.GetType();
-            var appDbContextAttribute = dbContextType.IsDefined(typeof(AppDbContextAttribute), true) ? dbContextType.GetCustomAttribute<AppDbContextAttribute>() : null;
+            var appDbContextAttribute = DbProvider.GetAppDbContextAttribute(dbContextType);
 
             // 初始化所有类型
             foreach (var entityType in dbContextCorrelationType.EntityTypes)
             {
                 // 创建实体类型
-                var entityBuilder = CreateEntityTypeBuilder(entityType, modelBuilder, dbContext, dbContextType, dbContextLocator, appDbContextAttribute);
+                var entityBuilder = CreateEntityTypeBuilder(entityType, modelBuilder, dbContext, dbContextType, dbContextLocator, dbContextCorrelationType, appDbContextAttribute);
                 if (entityBuilder == null) continue;
 
                 // 配置无键实体构建器
@@ -91,8 +100,12 @@ namespace Fur.DatabaseAccessor
                 // 配置数据库实体类型构建器
                 ConfigureEntityTypeBuilder(entityType, entityBuilder, dbContext, dbContextLocator, dbContextCorrelationType);
 
-                // 配置数据库实体种子数据
-                ConfigureEntitySeedData(entityType, entityBuilder, dbContext, dbContextLocator, dbContextCorrelationType);
+                // 不是 Web 环境跳过
+                if (!IsWebEnvironment)
+                {
+                    // 配置数据库实体种子数据
+                    ConfigureEntitySeedData(entityType, entityBuilder, dbContext, dbContextLocator, dbContextCorrelationType);
+                }
 
                 // 实体完成配置注入拦截
                 LoadModelBuilderOnCreated(modelBuilder, entityBuilder, dbContext, dbContextLocator, dbContextCorrelationType.ModelBuilderFilterInstances);
@@ -110,15 +123,20 @@ namespace Fur.DatabaseAccessor
         /// <param name="dbContext">数据库上下文</param>
         /// <param name="dbContextType">数据库上下文类型</param>
         /// <param name="dbContextLocator">数据库上下文定位器</param>
+        /// <param name="dbContextCorrelationType"></param>
         /// <param name="appDbContextAttribute">数据库上下文特性</param>
         /// <returns>EntityTypeBuilder</returns>
-        private static EntityTypeBuilder CreateEntityTypeBuilder(Type type, ModelBuilder modelBuilder, DbContext dbContext, Type dbContextType, Type dbContextLocator, AppDbContextAttribute appDbContextAttribute = null)
+        private static EntityTypeBuilder CreateEntityTypeBuilder(Type type, ModelBuilder modelBuilder, DbContext dbContext, Type dbContextType, Type dbContextLocator, DbContextCorrelationType dbContextCorrelationType, AppDbContextAttribute appDbContextAttribute = null)
         {
             // 反射创建实体类型构建器
             var entityTypeBuilder = ModelBuildEntityMethod.MakeGenericMethod(type).Invoke(modelBuilder, null) as EntityTypeBuilder;
 
-            // 添加表前后缀
-            AddTableAffixes(type, appDbContextAttribute, entityTypeBuilder, dbContext, dbContextType);
+            // 配置动态表名
+            if (!ConfigureEntityMutableTableName(type, entityTypeBuilder, dbContext, dbContextLocator, dbContextCorrelationType))
+            {
+                // 配置实体表名
+                ConfigureEntityTableName(type, appDbContextAttribute, entityTypeBuilder, dbContext, dbContextType);
+            }
 
             // 如果未启用多租户支持或租户设置为OnDatabase 或 OnSchema 方案，则忽略多租户字段，另外还需要排除多租户数据库上下文定位器
             if (dbContextLocator != typeof(MultiTenantDbContextLocator)
@@ -132,14 +150,14 @@ namespace Fur.DatabaseAccessor
         }
 
         /// <summary>
-        /// 添加表前后缀
+        /// 配置实体表名
         /// </summary>
         /// <param name="type">实体类型</param>
         /// <param name="appDbContextAttribute">数据库上下文特性</param>
         /// <param name="entityTypeBuilder">实体类型构建器</param>
         /// <param name="dbContext">数据库上下文</param>
         /// <param name="dbContextType">数据库上下文类型</param>
-        private static void AddTableAffixes(Type type, AppDbContextAttribute appDbContextAttribute, EntityTypeBuilder entityTypeBuilder, DbContext dbContext, Type dbContextType)
+        private static void ConfigureEntityTableName(Type type, AppDbContextAttribute appDbContextAttribute, EntityTypeBuilder entityTypeBuilder, DbContext dbContext, Type dbContextType)
         {
             // 排除无键实体或已经贴了 [Table] 特性的类型
             if (typeof(IPrivateEntityNotKey).IsAssignableFrom(type) || !string.IsNullOrEmpty(type.GetCustomAttribute<TableAttribute>(true)?.Schema)) return;
@@ -182,6 +200,41 @@ namespace Fur.DatabaseAccessor
                     return;
                 }
             }
+        }
+
+        /// <summary>
+        /// 配置实体动态表名
+        /// </summary>
+        /// <param name="entityType">实体类型</param>
+        /// <param name="entityBuilder">实体类型构建器</param>
+        /// <param name="dbContext">数据库上下文</param>
+        /// <param name="dbContextLocator">数据库上下文定位器</param>
+        /// <param name="dbContextCorrelationType">数据库实体关联类型</param>
+        private static bool ConfigureEntityMutableTableName(Type entityType, EntityTypeBuilder entityBuilder, DbContext dbContext, Type dbContextLocator, DbContextCorrelationType dbContextCorrelationType)
+        {
+            var isSet = false;
+
+            // 获取实体动态配置表配置
+            var entityMutableTableTypes = dbContextCorrelationType.EntityMutableTableTypes
+                .Where(u => u.GetInterfaces()
+                    .Any(i => i.HasImplementedRawGeneric(typeof(IPrivateEntityMutableTable<>)) && i.GenericTypeArguments.Contains(entityType)));
+
+            if (!entityMutableTableTypes.Any()) return isSet;
+
+            // 只应用于扫描的最后配置
+            var lastEntityMutableTableType = entityMutableTableTypes.Last();
+
+            var instance = Activator.CreateInstance(lastEntityMutableTableType);
+            var getTableNameMethod = lastEntityMutableTableType.GetMethod("GetTableName");
+            var tableName = getTableNameMethod.Invoke(instance, new object[] { dbContext, dbContextLocator });
+            if (tableName != null)
+            {
+                // 设置动态表名
+                entityBuilder.ToTable(tableName.ToString());
+                isSet = true;
+            }
+
+            return isSet;
         }
 
         /// <summary>
@@ -289,7 +342,9 @@ namespace Fur.DatabaseAccessor
             {
                 var instance = Activator.CreateInstance(entitySeedDataType);
                 var hasDataMethod = entitySeedDataType.GetMethod("HasData");
-                data.AddRange(hasDataMethod.Invoke(instance, new object[] { dbContext, dbContextLocator }).Adapt<IEnumerable<object>>());
+
+                var seedData = ((IList)hasDataMethod.Invoke(instance, new object[] { dbContext, dbContextLocator })).Cast<object>();
+                data.AddRange(seedData);
             }
 
             entityBuilder.HasData(data.ToArray());
@@ -322,22 +377,13 @@ namespace Fur.DatabaseAccessor
             // 处理自定义多租户的情况
             if (dbContextLocator == typeof(MultiTenantDbContextLocator) && Db.CustomizeMultiTenants && entityCorrelationType == typeof(Tenant)) return false;
 
-            // 获取类型父类型及接口
-            var baseType = entityCorrelationType.BaseType;
+            // 获取所有祖先类型
+            var ancestorTypes = entityCorrelationType.GetAncestorTypes();
+            // 获取所有接口
             var interfaces = entityCorrelationType.GetInterfaces().Where(u => typeof(IPrivateEntity).IsAssignableFrom(u) || typeof(IPrivateModelBuilder).IsAssignableFrom(u));
 
-            // 默认数据库上下文情况
-            if (dbContextLocator == typeof(MasterDbContextLocator))
-            {
-                // 父类等于 Entity/Entity<> 或等于 EntityBase/EntityBase<> 或等于 EntityNotKey
-                if (baseType == typeof(Entity) || baseType == typeof(EntityBase) || baseType.HasImplementedRawGeneric(typeof(Entity<>)) || baseType.HasImplementedRawGeneric(typeof(EntityBase<>)) || baseType == typeof(EntityNotKey)) return true;
-
-                // 接口等于 IEntity 或 IModelBuilderFilter 类型
-                if (interfaces.Any(u => u == typeof(IEntity) || u == typeof(IModelBuilderFilter))) return true;
-            }
-
-            // 父类是泛型且泛型参数包含数据库上下文定位器
-            if (baseType.IsGenericType && baseType.GenericTypeArguments.Contains(dbContextLocator)) return true;
+            // 祖先是泛型且泛型参数包含数据库上下文定位器
+            if (ancestorTypes.Any(u => u.IsGenericType && u.GenericTypeArguments.Contains(dbContextLocator))) return true;
 
             // 接口是泛型且泛型参数包含数据库上下文定位器
             if (interfaces.Any(u => u.IsGenericType && u.GenericTypeArguments.Contains(dbContextLocator))) return true;
@@ -421,10 +467,20 @@ namespace Fur.DatabaseAccessor
                             result.ModelBuilderFilterInstances.Add((entityCorrelationType == dbContext.GetType() ? dbContext : Activator.CreateInstance(entityCorrelationType)) as IPrivateModelBuilderFilter);
                         }
 
-                        // 添加种子数据
-                        if (entityCorrelationType.HasImplementedRawGeneric(typeof(IPrivateEntitySeedData<>)))
+                        // 只有非 Web 环境才添加种子数据
+                        if (!IsWebEnvironment)
                         {
-                            result.EntitySeedDataTypes.Add(entityCorrelationType);
+                            // 添加种子数据
+                            if (entityCorrelationType.HasImplementedRawGeneric(typeof(IPrivateEntitySeedData<>)))
+                            {
+                                result.EntitySeedDataTypes.Add(entityCorrelationType);
+                            }
+                        }
+
+                        // 添加动态表类型
+                        if (entityCorrelationType.HasImplementedRawGeneric(typeof(IPrivateEntityMutableTable<>)))
+                        {
+                            result.EntityMutableTableTypes.Add(entityCorrelationType);
                         }
 
                         // 添加实体数据改变监听

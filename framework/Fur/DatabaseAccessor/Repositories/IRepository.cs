@@ -49,6 +49,24 @@ namespace Fur.DatabaseAccessor
             where TDbContextLocator : class, IDbContextLocator;
 
         /// <summary>
+        /// 重新构建并切换仓储
+        /// </summary>
+        /// <typeparam name="TEntity">实体类型</typeparam>
+        /// <returns>仓储</returns>
+        IRepository<TEntity> BuildChange<TEntity>()
+            where TEntity : class, IPrivateEntity, new();
+
+        /// <summary>
+        /// 重新构建并切换多数据库上下文仓储
+        /// </summary>
+        /// <typeparam name="TEntity">实体类型</typeparam>
+        /// <typeparam name="TDbContextLocator">数据库上下文定位器</typeparam>
+        /// <returns>仓储</returns>
+        IRepository<TEntity, TDbContextLocator> BuildChange<TEntity, TDbContextLocator>()
+            where TEntity : class, IPrivateEntity, new()
+            where TDbContextLocator : class, IDbContextLocator;
+
+        /// <summary>
         /// 获取 Sql 操作仓储
         /// </summary>
         /// <returns>ISqlRepository</returns>
@@ -88,16 +106,6 @@ namespace Fur.DatabaseAccessor
         where TEntity : class, IPrivateEntity, new()
         where TDbContextLocator : class, IDbContextLocator
     {
-        /// <summary>
-        /// 数据库上下文
-        /// </summary>
-        DbContext DbContext { get; }
-
-        /// <summary>
-        /// 动态数据库上下文
-        /// </summary>
-        dynamic DynamicDbContext { get; }
-
         /// <summary>
         /// 实体集合
         /// </summary>
@@ -340,6 +348,7 @@ namespace Fur.DatabaseAccessor
         /// 动态改变表名
         /// </summary>
         /// <param name="tableName">表名</param>
+        [Obsolete("该方法已过时，请调用 BuildChange<TEntity> 方法代替。")]
         void ChangeTable(string tableName);
 
         /// <summary>
@@ -434,11 +443,21 @@ namespace Fur.DatabaseAccessor
             where TChangeDbContextLocator : class, IDbContextLocator;
 
         /// <summary>
-        /// 将仓储约束为特定仓储
+        /// 重新构建并切换仓储
         /// </summary>
-        /// <typeparam name="TRestrainRepository">特定仓储</typeparam>
-        /// <returns>TRestrainRepository</returns>
-        TRestrainRepository Constraint<TRestrainRepository>()
-            where TRestrainRepository : class, IPrivateRepository;
+        /// <typeparam name="TChangeEntity">实体类型</typeparam>
+        /// <returns>仓储</returns>
+        IRepository<TChangeEntity> BuildChange<TChangeEntity>()
+               where TChangeEntity : class, IPrivateEntity, new();
+
+        /// <summary>
+        /// 重新构建并切换多数据库上下文仓储
+        /// </summary>
+        /// <typeparam name="TChangeEntity">实体类型</typeparam>
+        /// <typeparam name="TChangeDbContextLocator">数据库上下文定位器</typeparam>
+        /// <returns>仓储</returns>
+        IRepository<TChangeEntity, TChangeDbContextLocator> BuildChange<TChangeEntity, TChangeDbContextLocator>()
+            where TChangeEntity : class, IPrivateEntity, new()
+            where TChangeDbContextLocator : class, IDbContextLocator;
     }
 }

@@ -1,5 +1,4 @@
 ﻿using Fur.DependencyInjection;
-using Mapster;
 using System;
 using System.Collections.Generic;
 using System.Data;
@@ -46,7 +45,7 @@ namespace Fur.DatabaseAccessor
                 if (property.IsDefined(typeof(DbParameterAttribute), true))
                 {
                     var dbParameterAttribute = property.GetCustomAttribute<DbParameterAttribute>(true);
-                    dbParameters.Add(DbHelpers.ConfigureDbParameter(property.Name, propertyValue, dbParameterAttribute, dbParameter));
+                    dbParameters.Add(ConfigureDbParameter(property.Name, propertyValue, dbParameterAttribute, dbParameter));
                     continue;
                 }
 
@@ -267,7 +266,7 @@ namespace Fur.DatabaseAccessor
 
             return new ProcedureOutputResult<TResult>
             {
-                Result = dataSet.ToList(typeof(TResult)).Adapt<TResult>(),
+                Result = (TResult)dataSet.ToValueTuple(typeof(TResult)),
                 OutputValues = outputValues,
                 ReturnValue = returnValue
             };
@@ -282,15 +281,12 @@ namespace Fur.DatabaseAccessor
         /// <returns>ProcedureOutput</returns>
         internal static object WrapperProcedureOutput(DbParameter[] parameters, DataSet dataSet, Type type)
         {
-            // 读取输出返回值
-            ReadOuputValue(parameters, out var outputValues, out var returnValue);
+            var wrapperProcedureOutputMethod = typeof(DbHelpers)
+                    .GetMethods(BindingFlags.Static | BindingFlags.NonPublic)
+                    .First(u => u.Name == "WrapperProcedureOutput" && u.IsGenericMethod)
+                    .MakeGenericMethod(type);
 
-            var procedureOutputResult = Activator.CreateInstance<ProcedureOutputResult<object>>();
-            procedureOutputResult.Result = dataSet.ToList(type);
-            procedureOutputResult.OutputValues = outputValues;
-            procedureOutputResult.ReturnValue = returnValue;
-
-            return procedureOutputResult;
+            return wrapperProcedureOutputMethod.Invoke(null, new object[] { parameters, dataSet });
         }
 
         /// <summary>

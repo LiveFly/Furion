@@ -1,6 +1,7 @@
 ﻿using Fur.DependencyInjection;
 using System;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.Linq;
 using System.Reflection;
 using System.Runtime.CompilerServices;
@@ -139,6 +140,30 @@ namespace Fur.Extensions
         }
 
         /// <summary>
+        /// 获取所有祖先类型
+        /// </summary>
+        /// <param name="type"></param>
+        /// <returns></returns>
+        internal static IEnumerable<Type> GetAncestorTypes(this Type type)
+        {
+            var ancestorTypes = new List<Type>();
+            while (type != null && type != typeof(object))
+            {
+                if (IsNoObjectBaseType(type))
+                {
+                    var baseType = type.BaseType;
+                    ancestorTypes.Add(baseType);
+                    type = baseType;
+                }
+                else break;
+            }
+
+            return ancestorTypes;
+
+            static bool IsNoObjectBaseType(Type type) => type.BaseType != typeof(object);
+        }
+
+        /// <summary>
         /// 获取方法真实返回类型
         /// </summary>
         /// <param name="method"></param>
@@ -188,7 +213,73 @@ namespace Fur.Extensions
                 ? string.Empty
                 : iLen == 1
                     ? str.ToLower()
-                    : str[0].ToString().ToLower() + str.Substring(1);
+                    : str[0].ToString().ToLower() + str[1..];
+        }
+
+        /// <summary>
+        /// 将一个对象转换为指定类型
+        /// </summary>
+        /// <typeparam name="T"></typeparam>
+        /// <param name="obj"></param>
+        /// <returns></returns>
+        internal static T ChangeType<T>(this object obj)
+        {
+            return (T)ChangeType(obj, typeof(T));
+        }
+
+        /// <summary>
+        /// 将一个对象转换为指定类型
+        /// </summary>
+        /// <param name="obj">待转换的对象</param>
+        /// <param name="type">目标类型</param>
+        /// <returns>转换后的对象</returns>
+        internal static object ChangeType(this object obj, Type type)
+        {
+            if (type == null) return obj;
+            if (obj == null) return type.IsValueType ? Activator.CreateInstance(type) : null;
+
+            var underlyingType = Nullable.GetUnderlyingType(type);
+            if (type.IsAssignableFrom(obj.GetType())) return obj;
+            else if ((underlyingType ?? type).IsEnum)
+            {
+                if (underlyingType != null && string.IsNullOrEmpty(obj.ToString())) return null;
+                else return Enum.Parse(underlyingType ?? type, obj.ToString());
+            }
+            else if (typeof(IConvertible).IsAssignableFrom(underlyingType ?? type))
+            {
+                try
+                {
+                    return Convert.ChangeType(obj, underlyingType ?? type, null);
+                }
+                catch
+                {
+                    return underlyingType == null ? Activator.CreateInstance(type) : null;
+                }
+            }
+            else
+            {
+                var converter = TypeDescriptor.GetConverter(type);
+                if (converter.CanConvertFrom(obj.GetType())) return converter.ConvertFrom(obj);
+
+                var constructor = type.GetConstructor(Type.EmptyTypes);
+                if (constructor != null)
+                {
+                    var o = constructor.Invoke(null);
+                    var propertys = type.GetProperties();
+                    var oldType = obj.GetType();
+
+                    foreach (var property in propertys)
+                    {
+                        var p = oldType.GetProperty(property.Name);
+                        if (property.CanWrite && p != null && p.CanRead)
+                        {
+                            property.SetValue(o, ChangeType(p.GetValue(obj, null), property.PropertyType), null);
+                        }
+                    }
+                    return o;
+                }
+            }
+            return obj;
         }
     }
 }
